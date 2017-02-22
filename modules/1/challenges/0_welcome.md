@@ -15,9 +15,9 @@ The intention is to provide you a high-level goal, some shorter, easy-to-follow 
 
 This module is split into four challenges:
 
-- [Setting up a Skill through the Amazon Developer Portal](1_setting_up_a_new_skill.md)
-- [Setting up a local development server to which Amazon's Alexa Service can send requests, via a Tunnel](2_local_development_environment_setup.md)
-- [Linking Amazon's Alexa Service to our local development server](3_linking_amazon_to_our_endpoint.md)
-- [Responding to Alexa Requests](4_responding_to_alexa_requests.md)
+1. [Setting up a Skill through the Amazon Developer Portal](1_setting_up_a_new_skill.md)
+2. [Setting up a local development server to which Amazon's Alexa Service can send requests, via a Tunnel](2_local_development_environment_setup.md)
+3. [Linking Amazon's Alexa Service to our local development server](3_linking_amazon_to_our_endpoint.md)
+4. [Responding to Alexa Requests](4_responding_to_alexa_requests.md)
 
 Whenever you're ready, [head to the first challenge](1_setting_up_a_new_skill.md).

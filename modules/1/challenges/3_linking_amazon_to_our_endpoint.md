@@ -19,4 +19,4 @@ To complete this challenge, **configure your Amazon Skill to use the HTTPS Endpo
 
 ### Walkthrough
 
-Ready for a step-by-step guide? [Head to the Walkthrough for this Challenge](walkthroughs/3.md).
+Ready for a step-by-step guide? [Head to the Walkthrough for this Challenge](../walkthroughs/3.md).

@@ -19,4 +19,4 @@ To complete this challenge, **set up a new Sinatra Application with an Endpoint 
 
 ### Walkthrough
 
-Ready for a step-by-step guide? [Head to the Walkthrough for this Challenge](walkthroughs/2_local_development_environment_setup.md).
+Ready for a step-by-step guide? [Head to the Walkthrough for this Challenge](../walkthroughs/2_local_development_environment_setup.md).

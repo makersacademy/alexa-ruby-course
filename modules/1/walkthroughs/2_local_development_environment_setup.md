@@ -37,4 +37,5 @@ end
 - In a second Terminal, start your Sinatra application using `ruby server.rb`.
 
 [On to the next Challenge](../challenges/3_linking_amazon_to_our_endpoint.md)
+
 [Back to the Welcome](../challenges/0_welcome.md)

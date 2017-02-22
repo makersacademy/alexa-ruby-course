@@ -53,4 +53,5 @@ HelloWorld say hello world
 We've now set up our Skill on Amazon's Alexa Developer Portal.
 
 [On to the next Challenge](../challenges/2_local_development_environment_setup.md)
+
 [Back to the Welcome](../challenges/0_welcome.md)

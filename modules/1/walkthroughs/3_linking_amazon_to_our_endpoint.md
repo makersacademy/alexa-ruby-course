@@ -34,4 +34,5 @@ The _Service Simulator_ allows you to try out utterances. Once you’ve written 
 You’ve now hooked up your local development environment to an Alexa Skill!
 
 [On to the next Challenge](../challenges/4_responding_to_alexa_requests.md)
+
 [Back to the Welcome](../challenges/0_welcome.md)
