@@ -13,9 +13,10 @@ This module introduces:
 
 In this module, there are the following:
 
-- [Scaffolds](scaffolds/) (for use by coaches delivering the content) :construction:
-- [Markdown Walkthrough](walkthrough.md)
-- [PDF Walkthrough](walkthrough.pdf)
+- [Challenges](challenges/) (for use by coaches delivering the content)
+- [Challenge Walkthroughs](walkthroughs/) (for use by coaches delivering the content)
+- [Full Markdown Walkthrough](walkthrough.md)
+- [Full PDF Walkthrough](walkthrough.pdf)
 - [Images](images/) associated with this module
 
 ## Overview
