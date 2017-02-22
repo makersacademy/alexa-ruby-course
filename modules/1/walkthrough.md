@@ -5,16 +5,16 @@ Our first step is to set up the Skill on Amazon.
 
 - Sign in to the Amazon Alexa Developer Dashboard [here](https://developer.amazon.com/alexa)
 - Get Started with the Alexa Skills Kit: 
-![Get Started with the Alexa Skills Kit](Screen%20Shot%202017-02-22%20at%2011.39.31.png)
+![Get Started with the Alexa Skills Kit](images/Screen%20Shot%202017-02-22%20at%2011.39.31.png)
 
 - ‘Add a New Skill’: 
-![](Screen%20Shot%202017-02-22%20at%2011.41.38.png)
+![](images/Screen%20Shot%202017-02-22%20at%2011.41.38.png)
 
 - Set up the app:
   - Language (English (U.K.))
   - Name (‘Hello World’)
   - Invocation Name (‘Hello World’)
-![](Screen%20Shot%202017-02-22%20at%2011.42.44.png)
+![](images/Screen%20Shot%202017-02-22%20at%2011.42.44.png)
 
 - Make Intent Schema:
 > The Intent Schema lists all the possible requests Amazon can make to your application.
@@ -72,7 +72,7 @@ Our third step is to link the Skill we set up on Amazon (1) with the Tunnel Endp
   - Paste the Endpoint to your application into the text input field
 > If using ngrok, your Endpoint is the URL you copied, starting with ‘https’ and ending with ‘.ngrok.io’.
 - No Account Linking
-![](Screen%20Shot%202017-02-22%20at%2012.31.52.png)
+![](images/Screen%20Shot%202017-02-22%20at%2012.31.52.png)
 
 - Hit next, then set up the SSL Certificate:
 > Amazon’s servers will only send requests to HTTPS web addresses, which need to be signed with an SSL Certificate.
