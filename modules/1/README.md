@@ -21,3 +21,12 @@ This module deliberately does not use any Ruby framework for Sinatra. Instead, i
 - Readers are not tied to any one Open Source framework, which enhances the longevity of these materials (in the event the framework is not maintained or superceded).
 
 By the end of this module, readers are prepared to create a Skill that takes parameters to Utterances (that is, uses Slots).
+
+## Contents
+
+In this module, there are the following:
+
+- [Scaffolds](scaffolds/) (for use by coaches delivering the content) :construction:
+- [Markdown Walkthrough](walkthrough.md)
+- [PDF Walkthrough](walkthrough.pdf)
+- [Images](images/) associated with this module
