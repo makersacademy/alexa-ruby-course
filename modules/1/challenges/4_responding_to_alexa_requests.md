@@ -17,4 +17,4 @@ To complete this challenge, **construct a JSON response from your application wh
 
 ### Walkthrough
 
-Ready for a step-by-step guide? [Head to the Walkthrough for this Challenge](../walkthroughs/4.md).
+Ready for a step-by-step guide? [Head to the Walkthrough for this Challenge](../walkthroughs/4_responding_to_alexa_requests.md).
