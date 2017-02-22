@@ -10,7 +10,7 @@ A short course training developers to build Alexa Skills using Ruby.
 
 ### Modules
 
-1. [Intent Schemas & Alexa Communication Paradigm](modules/1) :construction:
+1. [Intent Schemas & Alexa Communication Paradigm](modules/1) :book:
 1. [Slots](modules/2) :construction:
 1. [Sessions](modules/3) :construction:
 1. [Persistence](modules/4) :construction:
