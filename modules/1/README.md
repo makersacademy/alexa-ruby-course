@@ -17,7 +17,7 @@ In this module, there are the following:
 - [Challenge Walkthroughs](walkthroughs/) (for use by coaches delivering the content)
 - [Full Markdown Walkthrough](walkthrough.md)
 - [Full PDF Walkthrough](walkthrough.pdf)
-- [Images](images/) associated with this module
+- [Images](images/) associated with this module. These are also hosted on our asset CDN, Makers Assets.
 
 ## Overview
 

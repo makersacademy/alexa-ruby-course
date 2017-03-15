@@ -5,16 +5,16 @@ Our first step is to set up the Skill on Amazon.
 
 - Sign up, then sign in to the [Amazon Alexa Developer Dashboard](https://developer.amazon.com/alexa)
 - Get Started with the Alexa Skills Kit: 
-![Get Started with the Alexa Skills Kit](images/Screen%20Shot%202017-02-22%20at%2011.39.31.png)
+![Get Started with the Alexa Skills Kit](http://assets.makersacademy.com/images/alexa-ruby-course/1/1_get_started.png)
 
 - ‘Add a New Skill’: 
-![](images/Screen%20Shot%202017-02-22%20at%2011.41.38.png)
+![](http://assets.makersacademy.com/images/alexa-ruby-course/1/2_add_a_new_skill.png)
 
 - Set up the app:
   - Language
   - Name (‘Hello World’)
   - Invocation Name (‘Hello World’)
-![](images/Screen%20Shot%202017-02-22%20at%2011.42.44.png)
+![](http://assets.makersacademy.com/images/alexa-ruby-course/1/3_configure_skill.png)
 
 ##### Intent Schemas
 
@@ -107,7 +107,7 @@ Head back to your Alexa Skill (for which you just entered Intents and Utterances
 
 - You won't need Account Linking for this application.
 
-![](images/Screen%20Shot%202017-02-22%20at%2012.31.52.png)
+![](http://assets.makersacademy.com/images/alexa-ruby-course/1/4_configure_endpoint.png)
 
 ##### Configuring SSL
 
