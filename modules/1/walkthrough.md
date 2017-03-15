@@ -1,7 +1,7 @@
 # Alexa 1: Hello World
 
 ## 1. Amazon-side setup
-Our first step is to set up the Skill on Amazon.
+Our first step is to set up the skill on Amazon.
 
 - Sign up, then sign in to the [Amazon Alexa Developer Dashboard](https://developer.amazon.com/alexa)
 - Get Started with the Alexa Skills Kit: 
@@ -15,6 +15,8 @@ Our first step is to set up the Skill on Amazon.
   - Name (‘Hello World’)
   - Invocation Name (‘Hello World’)
 ![](http://assets.makersacademy.com/images/alexa-ruby-course/1/3_configure_skill.png)
+
+> The Invocation Name is used by the user to access a certain skill. For example, "Alexa, ask <invocation name> to say Hello World."
 
 ##### Intent Schemas
 
@@ -31,7 +33,7 @@ Now we have a new skill, let's construct the **Intent Schema**.
   }
 ```
 
-The minimal Intent Schema is a JSON object, with a single property: `intents`. This property lists all the actions an Alexa Skill can take. Each action is a JSON object, with a single property: `intent`. The `intent` property gives the name of the intent.
+The minimal Intent Schema is a JSON object, with a single property: `intents`. This property lists all the actions an Alexa skill can take. Each action is a JSON object, with a single property: `intent`. The `intent` property gives the name of the intent.
 
 ##### Utterances
 
@@ -43,7 +45,7 @@ IntentName utterance
 
 In our case, we have only one Intent: `HelloWorld`, and we'd like the user to say the following:
 
-> Alexa, say hello world.
+> Alexa, ask HelloWorld to say hello world.
 
 Our Utterances are:
 
@@ -51,7 +53,7 @@ Our Utterances are:
 HelloWorld say hello world
 ```
 
-We've now set up our Skill on Amazon's Alexa Developer Portal.
+We've now set up our skill on Amazon's Alexa Developer Portal.
 
 ## 2. Local Tunnelled Development Environment setup
 Our second step is to set up our local Ruby application, ready to receive encrypted requests from Amazon’s servers (i.e. HTTP requests over SSL, or ‘HTTPS’ requests).
@@ -60,7 +62,7 @@ We will walk through setting up a Ruby server using Sinatra, running locally, an
 
 Alternatively, you could set up a **remote** development server using [Heroku](http://heroku.com) (with [Heroku SSL](https://devcenter.heroku.com/articles/ssl)), [Amazon Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/?sc_channel=PS&sc_campaign=acquisition_UK&sc_publisher=google&sc_medium=beanstalk_b&sc_content=elastic_beanstalk_e&sc_detail=elastic%20beanstalk&sc_category=beanstalk&sc_segment=159760119038&sc_matchtype=e&sc_country=UK&s_kwcid=AL!4422!3!159760119038!e!!g!!elastic%20beanstalk&ef_id=WKgq9QAABVYkDTpR:20170222115859:s) (with a [self-signed SSL certificate](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https-ssl.html)), or any other method you can think of.
 
-We’re going to use [ngrok](https://ngrok.com/) to Tunnel to a local development server.
+We’re going to use [ngrok](https://ngrok.com/) to **Tunnel** to a local development server.
 
 ##### Setting up a Sinatra application
 
@@ -91,13 +93,13 @@ end
 - In a second Terminal, start your Sinatra application using `ruby server.rb`.
 
 ## 3. Linking Amazon to our Endpoint
-Our third step is to link the Skill we set up on Amazon (1) with the Tunnel Endpoint (2) so our Skill can send requests to our local application.
+Our third step is to link the skill we set up on Amazon (1) with the Tunnel Endpoint (2) so our skill can send requests to our local application.
 
 ##### Configuring the Endpoint in the Alexa Skills Portal
 
 > When Amazon invokes an Intent, Amazon sends a `POST` request to the specified _Endpoint_ (web address).
 
-Head back to your Alexa Skill (for which you just entered Intents and Utterances). Hit Next, then set up the Endpoint.
+Head back to your Alexa skill (for which you just entered Intents and Utterances). Hit Next, then set up the Endpoint.
 
 - Use HTTPS, not Lambda (no Ruby on Lambda)
   - Geographical Region: Europe
@@ -122,10 +124,10 @@ The _Service Simulator_ allows you to try out utterances. Once you’ve written 
 
 - Use the Service Simulator to test that the `say hello world` utterance causes Amazon to send an Intent Request to your local application, and observe that the request body printed to the command-line matches the JSON request sent in the Service Simulator.
 
-You’ve now hooked up your local development environment to an Alexa Skill!
+You’ve now hooked up your local development environment to an Alexa skill!
 
 ## 4. Responding to Alexa Requests
-Now we have built an Alexa development Skill (1), built a local development server with an endpoint tunnelled via HTTPS (2), and can make requests from Amazon to our local development server through that endpoint (3).
+Now we have built an Alexa development skill (1), built a local development server with an endpoint tunnelled via HTTPS (2), and can make requests from Amazon to our local development server through that endpoint (3).
 
 Our final step is to construct a response from our endpoint such that Amazon can interpret the response to make Alexa say ‘Hello World’ to us.
 
@@ -134,7 +136,7 @@ Our final step is to construct a response from our endpoint such that Amazon can
 Amazon sends and receives JSON responses in a particular format. Let's set that up here.
 
 - `require 'json'` at the top of `server.rb`
-- Replace the body of our Sinatra POST ‘/‘ route with the smallest possible response from the [Alexa Skills Kill Response Body Documentation](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/alexa-skills-kit-interface-reference#response-body-syntax):
+- Replace the body of our Sinatra POST ‘/‘ route with the smallest possible response from the [Alexa Skills Kit Response Body Documentation](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/alexa-skills-kit-interface-reference#response-body-syntax):
 
 ```ruby
 # inside server.rb
@@ -166,4 +168,4 @@ There are a few parts to this JSON response object:
 
 Now that we've built a JSON response, we can restart the server, and test out the new response in the Service Simulator.
 
-If you would like to try your new Hello World skill out live, hit ‘Next’ to complete the Publishing Information, 'Save', and download the skill in your Alexa App!
+If you would like to try your new Hello World skill out live, hit ‘Next’ to complete the Publishing Information, 'Save', and ask HelloWorld to say 'Hello World' on any Alexa-enabled device registered to your developer account!
