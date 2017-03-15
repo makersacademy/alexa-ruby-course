@@ -227,10 +227,11 @@ However, Numbers API can provide two different kinds of facts: trivia facts, and
 
 Because we’re passing another piece of variable information to our Intent, we’ll need to define another Slot. However, where the built-in `AMAZON.NUMBER` slot restricted us to numbers only, there are no built-in Slots that will restrict us to the words ‘trivia’ or ‘math’. We have to make our own.
 
-Let's head to the Interaction Model pane in the Alexa Skills Developer Console, and add a new Custom Slot type. We'll call this Custom Slot type `FACT_TYPE`. There are two possible Values for this Custom Slot type: `trivia` and `math`. They must be provided separated by a pipe (`|`), like so:
+Let's head to the Interaction Model pane in the Alexa Skills Developer Console, and add a new Custom Slot type. We'll call this Custom Slot type `FACT_TYPE`. There are two possible Values for this Custom Slot type: `trivia` and `math`. They must be provided separated by a newline, like so:
 
 ```
-trivia | math
+trivia
+math
 ```
 
 Now we've defined our Custom Slot type, we can go ahead and rewrite our Utterance to include the Slot:
