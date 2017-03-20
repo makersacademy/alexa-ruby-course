@@ -1,5 +1,27 @@
 # Alexa 1: Hello World
 
+Welcome to the first module of Amazon Alexa and Makers Academy's short course on building Alexa skills using Ruby! Amazon's Alexa Skills Kit allows developers to extend existing applications with deep voice integration, and to construct entirely new applications that leverage the cutting-edge in voice-controlled technology.
+
+During this course, we'll cover all the terminology and techniques required to get fully-functional skills pushed live to owners of Alexa-enabled devices all round the world. We'll be using Ruby.
+
+## What's in this module?
+
+This module contains a basic introduction to scaffolding a skill, and interacting with Alexa. This module introduces:
+
+- Intent Schemas
+- Utterances
+- Alexa communication paradigm
+- Tunnelling a local application using ngrok over HTTPS
+- Connecting Alexa to a local development environment
+- Alexa-style JSON requests and responses
+
+During this module, readers will construct a simple skill, called 'Hello World'. While building this skill, readers come to understand how the above concepts work and play together. This module uses:
+
+- Sinatra
+- Ruby's JSON library
+
+Let's get started!
+
 ## 1. Amazon-side setup: setting up the Voice User Interface ('VUI')
 Our first step is to set up the skill on Amazon.
 

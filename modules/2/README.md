@@ -28,4 +28,4 @@ This module deliberately does not use any Ruby framework for Sinatra. Instead, i
 - Readers are informed about the underlying structure of requests and responses by interfacing with them directly, giving them more flexibility when implementing Skills in future
 - Readers are not tied to any one Open Source framework, which enhances the longevity of these materials (in the event the framework is not maintained or superceded).
 
-By the end of this module, readers are prepared to create a Skill that involves conversation (that is, uses Sessions).
+By the end of this module, readers are prepared to create a skill that takes parameters to Utterances (that is, uses Slots).

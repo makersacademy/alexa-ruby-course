@@ -21,7 +21,7 @@ In this module, there are the following:
 
 ## Overview
 
-During this module, readers will construct a simple Skill, called 'Hello World'. While building this skill, readers come to understand how the above concepts work and play together. This module uses:
+During this module, readers will construct a simple skill, called 'Hello World'. While building this skill, readers come to understand how the above concepts work and play together. This module uses:
 
 - Sinatra
 - Ruby's JSON library
@@ -32,4 +32,4 @@ This module deliberately does not use any Ruby framework for Sinatra. Instead, i
 - Readers are informed about the underlying structure of requests and responses by interfacing with them directly, giving them more flexibility when implementing Skills in future
 - Readers are not tied to any one Open Source framework, which enhances the longevity of these materials (in the event the framework is not maintained or superceded).
 
-By the end of this module, readers are prepared to create a Skill that takes parameters to Utterances (that is, uses Slots).
+By the end of this module, readers are prepared to create a basic skill.
