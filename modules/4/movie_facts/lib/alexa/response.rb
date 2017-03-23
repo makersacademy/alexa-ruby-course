@@ -2,8 +2,9 @@ require 'json'
 
 module Alexa
   class Response
-    def initialize(output_text = "Hello World")
+    def initialize(output_text = "Hello World", session_attributes = {})
       @output_text = output_text
+      @session_attributes = session_attributes
     end
 
     def to_json

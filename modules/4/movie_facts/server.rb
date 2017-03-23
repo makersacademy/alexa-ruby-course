@@ -1,5 +1,6 @@
 require 'sinatra'
-require 'json'
+require 'alexa/request'
+require 'alexa/response'
 require 'imdb'
 
 post '/' do 
@@ -11,6 +12,8 @@ post '/' do
     requested_movie = parsed_request["request"]["intent"]["slots"]["Movie"]["value"]
     movie_list = Imdb::Search.new(requested_movie).movies
     movie = movie_list.first
+
+    # Alexa::Response.new(movie.plot_synopsis, { movieTitle: requested_movie }).to_json
 
     return { 
       version: "1.0",
