@@ -37,6 +37,22 @@ RSpec.describe Alexa::Response do
       expect(session_response).to eq expected_response
     end
 
+    it 'returns a JSON response with an endSessionRequest if provided' do
+      expected_response = {
+        version: "1.0",
+        response: {
+          outputSpeech: {
+            type: "PlainText",
+            text: "Custom String"
+          },
+          shouldEndSession: true
+        }
+      }.to_json
+
+      end_session_response = described_class.new("Custom String", {}, true).to_json
+      expect(end_session_response).to eq expected_response
+    end
+
     it 'returns a minimal JSON response otherwise' do
       minimal_response = { 
         version: "1.0",
