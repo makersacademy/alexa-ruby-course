@@ -5,7 +5,6 @@ require 'imdb'
 
 post '/' do 
   alexa_request = Alexa::Request.new(request)
-  session = parsed_request["session"]
 
   if alexa_request.new_session?
     movie_list = Imdb::Search.new(alexa_request.slot_value("Movie")).movies
@@ -18,17 +17,15 @@ post '/' do
     return Alexa::Response.build("OK, what movie would you like to know about?", {}, true)
   end
 
-  movie_title = session["attributes"]["movieTitle"]
+  movie_title = alexa_request.session_attribute("movieTitle")
   movie_list = Imdb::Search.new(movie_title).movies
   movie = movie_list.first
 
-  role = parsed_request["request"]["intent"]["slots"]["Role"]["value"]
-
-  if role == "directed"
+  if alexa_request.slot_value("Role") == "directed"
     response_text = "#{movie_title} was directed by #{movie.director.join}"
   end
 
-  if role == "starred in"
+  if alexa_request.slot_value("Role") == "starred in"
     response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
   end
 

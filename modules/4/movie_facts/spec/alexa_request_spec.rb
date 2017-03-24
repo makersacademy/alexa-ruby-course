@@ -21,7 +21,7 @@ RSpec.describe Alexa::Request do
       expect(described_class.new(stubbed_request).intent_name).to eq "IntentName"
     end
   end
-  
+
   describe '#slot_value' do
     it 'returns the value for a specific slot' do
       stubbed_request = stub_sinatra_request({
@@ -62,14 +62,26 @@ RSpec.describe Alexa::Request do
       stubbed_request = stub_sinatra_request({
         "session": {
           "sessionId": "id_string",
-          "application": {
-            "applicationId": "id_string"
-          },
           "new": false
         }
       }.to_json)
 
       expect(described_class.new(stubbed_request).new_session?).to be false
+    end
+  end
+
+  describe '#session_attribute' do
+    it 'returns the value for a specified session attribute' do
+      stubbed_request = stub_sinatra_request({
+        "session": {
+          "sessionId": "id_string",
+          "attributes": {
+            "movieTitle": "titanic"
+          }
+        }
+      }.to_json)
+
+      expect(described_class.new(stubbed_request).session_attribute("movieTitle")).to eq "titanic"
     end
   end
 
