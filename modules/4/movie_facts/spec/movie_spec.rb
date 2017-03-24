@@ -9,4 +9,20 @@ RSpec.describe Movie do
       described_class.find("Some Movie Title", client)
     end
   end
+
+  describe '#cast_list' do
+    it 'returns a human-readable string of cast members' do
+      imdb_record = double("Imdb::Movie", title: "Movie", cast_members: ["Famous star 1", "Famous star 2"])
+
+      expect(described_class.new(imdb_record).cast_members).to eq "Movie starred Famous star 1, Famous star 2"
+    end
+  end
+
+  describe '#directors' do
+    it 'returns a human-readable string of director names' do
+      imdb_record = double("Imdb::Movie", title: "Movie", director: ["Famous director"])
+
+      expect(described_class.new(imdb_record).directors).to eq "Movie was directed by Famous director"
+    end
+  end
 end

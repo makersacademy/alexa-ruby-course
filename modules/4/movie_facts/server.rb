@@ -28,13 +28,8 @@ end
 def respond_with_movie_details(alexa_request)
   movie = Movie.find(alexa_request.session_attribute("movieTitle"))
 
-  if alexa_request.slot_value("Role") == "directed"
-    response_text = "#{movie.title} was directed by #{movie.director.join}"
-  end
-
-  if alexa_request.slot_value("Role") == "starred in"
-    response_text = "#{movie.title} starred #{movie.cast_members.join(", ")}"
-  end
+  response_text = movie.directors if alexa_request.slot_value("Role") == "directed"
+  response_text = movie.cast_members if alexa_request.slot_value("Role") == "starred in"
 
   Alexa::Response.build(response_text, { movieTitle: movie.title })
 end
