@@ -17,16 +17,7 @@ post '/' do
   end
 
   if parsed_request["request"]["intent"]["name"] == "ClearSession"
-    return {
-      version: "1.0",
-      response: {
-        outputSpeech: {
-          type: "PlainText",
-          text: "OK, what movie would you like to know about?"
-        },
-        shouldEndSession: true
-      }
-    }.to_json
+    return Alexa::Response.build("OK, what movie would you like to know about?", {}, true)
   end
 
   movie_title = session["attributes"]["movieTitle"]
