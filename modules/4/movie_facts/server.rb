@@ -1,6 +1,6 @@
 require 'sinatra'
-require 'alexa/request'
-require 'alexa/response'
+require './lib/alexa/request'
+require './lib/alexa/response'
 require 'imdb'
 
 post '/' do 
@@ -13,20 +13,7 @@ post '/' do
     movie_list = Imdb::Search.new(requested_movie).movies
     movie = movie_list.first
 
-    # Alexa::Response.new(movie.plot_synopsis, { movieTitle: requested_movie }).to_json
-
-    return { 
-      version: "1.0",
-      sessionAttributes: {
-        movieTitle: requested_movie
-      },
-      response: {
-        outputSpeech: {
-            type: "PlainText",
-            text: movie.plot_synopsis
-          }
-      }
-    }.to_json
+    return Alexa::Response.new(movie.plot_synopsis, { movieTitle: requested_movie }).to_json
   end
 
   if parsed_request["request"]["intent"]["name"] == "ClearSession"
@@ -56,16 +43,5 @@ post '/' do
     response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
   end
 
-  return {
-    version: "1.0",
-    sessionAttributes: {
-      movieTitle: movie_title
-    },
-    response: {
-      outputSpeech: {
-        type: "PlainText",
-        text: response_text
-      }
-    }
-  }.to_json
+  Alexa::Response.new(response_text, { movieTitle: movie_title }).to_json
 end

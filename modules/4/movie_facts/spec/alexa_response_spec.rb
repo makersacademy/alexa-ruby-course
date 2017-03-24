@@ -33,7 +33,7 @@ RSpec.describe Alexa::Response do
         }
       }.to_json
 
-      session_response = described_class.new("Custom String", { sessionKey: "SessionValue" }).to_json
+      session_response = described_class.new("Custom String", { sessionKey: "Session Value" }).to_json
       expect(session_response).to eq expected_response
     end
 

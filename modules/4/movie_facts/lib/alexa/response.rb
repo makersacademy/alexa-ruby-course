@@ -8,15 +8,17 @@ module Alexa
     end
 
     def to_json
-      { 
-        version: "1.0",
-        response: {
-          outputSpeech: {
-              type: "PlainText",
-              text: @output_text
-            }
+      response = Hash.new
+      response[:version] = "1.0"
+      response[:sessionAttributes] = @session_attributes unless @session_attributes.empty?
+      response[:response] = { 
+        outputSpeech: {
+          type: "PlainText",
+          text: @output_text
         }
-      }.to_json
+      }
+
+      response.to_json
     end
   end
 end
