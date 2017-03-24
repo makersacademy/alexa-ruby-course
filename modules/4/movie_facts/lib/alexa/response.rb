@@ -3,9 +3,13 @@ require 'json'
 module Alexa
   class Response < Hash
     def initialize(output_text, session_attributes, end_session)
+      @output_text = output_text
+      @session_attributes = session_attributes
+      @end_session = end_session
+
       set_version
-      set_session_attributes(session_attributes)
-      set_response(output_text, end_session)
+      set_session_attributes
+      set_response
     end
 
     def self.build(output_text = "Hello World", session_attributes = {}, end_session = false)
@@ -18,16 +22,16 @@ module Alexa
       self[:version] = "1.0"
     end
 
-    def set_session_attributes(session_attributes)
-      self[:sessionAttributes] = session_attributes unless session_attributes.empty?
+    def set_session_attributes
+      self[:sessionAttributes] = @session_attributes unless @session_attributes.empty?
     end
 
-    def set_response(output_text, end_session)
+    def set_response
       self[:response] = Hash.new
       self[:response][:outputSpeech] = Hash.new
       self[:response][:outputSpeech][:type] = "PlainText"
-      self[:response][:outputSpeech][:text] = output_text
-      self[:response][:shouldEndSession] = end_session if end_session
+      self[:response][:outputSpeech][:text] = @output_text
+      self[:response][:shouldEndSession] = @end_session if @end_session
     end
   end
 end
