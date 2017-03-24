@@ -4,8 +4,8 @@ require './lib/alexa/response'
 require 'imdb'
 
 post '/' do 
-  parsed_request = JSON.parse(request.body.read)
-  session = parsed_request["session"]
+  alexa_request = Alexa::Request.new(request)
+  session = alexa_request["session"]
   this_is_the_first_request = session["new"]
 
   if this_is_the_first_request

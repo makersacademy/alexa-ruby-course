@@ -9,5 +9,9 @@ module Alexa
     def slot_value(slot_name)
       @request["request"]["intent"]["slots"][slot_name]["value"]
     end
+
+    def new_session?
+      @request["session"]["new"]
+    end
   end
 end
