@@ -3,7 +3,7 @@ require 'alexa/request'
 RSpec.describe Alexa::Request do
   describe '#slot_value' do
     it 'returns the value for a specific slot' do
-      request_json = {
+      stubbed_request = stub_sinatra_request({
         "request": {
           "type": "IntentRequest",
           "intent": {
@@ -16,18 +16,15 @@ RSpec.describe Alexa::Request do
             }
           }
         }
-      }.to_json
-      original_request_body = StringIO.new(request_json)
-      original_request = double("Sinatra::Request", body: original_request_body)
-      request = described_class.new(original_request)
+      }.to_json)
 
-      expect(request.slot_value("SlotName")).to eq "10"
+      expect(described_class.new(stubbed_request).slot_value("SlotName")).to eq "10"
     end
   end
 
   describe '#new_session?' do
     it 'is true if this is a new session' do
-      request_json = {
+      stubbed_request = stub_sinatra_request({
         "session": {
           "sessionId": "id_string",
           "application": {
@@ -35,16 +32,13 @@ RSpec.describe Alexa::Request do
           },
           "new": true
         }
-      }.to_json
-      original_request_body = StringIO.new(request_json)
-      original_request = double("Sinatra::Request", body: original_request_body)
-      request = described_class.new(original_request)
+      }.to_json)
 
-      expect(request.new_session?).to be true
+      expect(described_class.new(stubbed_request).new_session?).to be true
     end
 
     it 'is false otherwise' do
-      request_json = {
+      stubbed_request = stub_sinatra_request({
         "session": {
           "sessionId": "id_string",
           "application": {
@@ -52,12 +46,16 @@ RSpec.describe Alexa::Request do
           },
           "new": false
         }
-      }.to_json
-      original_request_body = StringIO.new(request_json)
-      original_request = double("Sinatra::Request", body: original_request_body)
-      request = described_class.new(original_request)
+      }.to_json)
 
-      expect(request.new_session?).to be false
+      expect(described_class.new(stubbed_request).new_session?).to be false
     end
+  end
+
+  private
+
+  def stub_sinatra_request(request_json)
+    original_request_body = StringIO.new(request_json)
+    double("Sinatra::Request", body: original_request_body)
   end
 end
