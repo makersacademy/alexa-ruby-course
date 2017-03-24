@@ -14,7 +14,7 @@ post '/' do
     return Alexa::Response.build(movie.plot_synopsis, { movieTitle: alexa_request.slot_value("Movie") })
   end
 
-  if parsed_request["request"]["intent"]["name"] == "ClearSession"
+  if alexa_request.intent_name == "ClearSession"
     return Alexa::Response.build("OK, what movie would you like to know about?", {}, true)
   end
 

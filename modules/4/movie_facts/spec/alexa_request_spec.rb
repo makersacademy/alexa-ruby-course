@@ -1,6 +1,27 @@
 require 'alexa/request'
 
 RSpec.describe Alexa::Request do
+  describe '#intent_name' do
+    it 'returns the IntentName from the request' do
+      stubbed_request = stub_sinatra_request({  
+        "request": {
+          "type": "IntentRequest",
+          "intent": {
+            "name": "IntentName",
+            "slots": {
+              "SlotName": {
+                "name": "SlotName",
+                "value": "10"
+              }
+            }
+          }
+        }
+      }.to_json)
+
+      expect(described_class.new(stubbed_request).intent_name).to eq "IntentName"
+    end
+  end
+  
   describe '#slot_value' do
     it 'returns the value for a specific slot' do
       stubbed_request = stub_sinatra_request({
@@ -49,27 +70,6 @@ RSpec.describe Alexa::Request do
       }.to_json)
 
       expect(described_class.new(stubbed_request).new_session?).to be false
-    end
-  end
-
-  describe '#intent_name' do
-    it 'returns the IntentName from the request' do
-      stubbed_request = stub_sinatra_request({  
-        "request": {
-          "type": "IntentRequest",
-          "intent": {
-            "name": "IntentName",
-            "slots": {
-              "SlotName": {
-                "name": "SlotName",
-                "value": "10"
-              }
-            }
-          }
-        }
-      }.to_json)
-
-      expect(described_class.new(stubbed_request).intent_name).to eq "IntentName"
     end
   end
 
