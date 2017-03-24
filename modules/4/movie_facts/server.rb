@@ -5,15 +5,13 @@ require 'imdb'
 
 post '/' do 
   alexa_request = Alexa::Request.new(request)
-  session = alexa_request["session"]
-  this_is_the_first_request = session["new"]
+  session = parsed_request["session"]
 
-  if this_is_the_first_request
-    requested_movie = parsed_request["request"]["intent"]["slots"]["Movie"]["value"]
-    movie_list = Imdb::Search.new(requested_movie).movies
+  if alexa_request.new_session?
+    movie_list = Imdb::Search.new(alexa_request.slot_value("Movie")).movies
     movie = movie_list.first
 
-    return Alexa::Response.build(movie.plot_synopsis, { movieTitle: requested_movie })
+    return Alexa::Response.build(movie.plot_synopsis, { movieTitle: alexa_request.slot_value("Movie") })
   end
 
   if parsed_request["request"]["intent"]["name"] == "ClearSession"
