@@ -13,5 +13,9 @@ module Alexa
     def new_session?
       @request["session"]["new"]
     end
+
+    def intent_name
+      @request["request"]["intent"]["name"]
+    end
   end
 end
