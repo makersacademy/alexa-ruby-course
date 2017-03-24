@@ -10,13 +10,19 @@ post '/' do
     return Alexa::Response.build("OK, what movie would you like to know about?", {}, true)
   end
 
-  if alexa_request.new_session?
-    movie_list = Imdb::Search.new(alexa_request.slot_value("Movie")).movies
-    movie = movie_list.first
+  return respond_with_movie_plot_synopsis(alexa_request) if alexa_request.new_session?
 
-    return Alexa::Response.build(movie.plot_synopsis, { movieTitle: alexa_request.slot_value("Movie") })
-  end
+  respond_with_movie_details(alexa_request)
+end
 
+def respond_with_movie_plot_synopsis(alexa_request)
+  movie_list = Imdb::Search.new(alexa_request.slot_value("Movie")).movies
+  movie = movie_list.first
+
+  Alexa::Response.build(movie.plot_synopsis, { movieTitle: alexa_request.slot_value("Movie") })
+end
+
+def respond_with_movie_details(alexa_request)
   movie_title = alexa_request.session_attribute("movieTitle")
   movie_list = Imdb::Search.new(movie_title).movies
   movie = movie_list.first
