@@ -1,26 +1,21 @@
 require 'json'
 
 module Alexa
-  class Response
-    def initialize(output_text = "Hello World", session_attributes = {}, end_session = false)
-      @output_text = output_text
-      @session_attributes = session_attributes
-      @end_session = end_session
+  class Response < Hash
+    def initialize(output_text, session_attributes, end_session)
+      self[:version] = "1.0"
+      self[:sessionAttributes] = session_attributes unless session_attributes.empty?
+
+      self[:response] = Hash.new
+      self[:response][:outputSpeech] = Hash.new
+      self[:response][:outputSpeech][:type] = "PlainText"
+      self[:response][:outputSpeech][:text] = output_text
+
+      self[:response][:shouldEndSession] = end_session if end_session
     end
 
-    def to_json
-      response = Hash.new
-      response[:version] = "1.0"
-      response[:sessionAttributes] = @session_attributes unless @session_attributes.empty?
-
-      response[:response] = Hash.new
-      response[:response][:outputSpeech] = Hash.new
-      response[:response][:outputSpeech][:type] = "PlainText"
-      response[:response][:outputSpeech][:text] = @output_text
-      
-      response[:response][:shouldEndSession] = @end_session if @end_session
-
-      response.to_json
+    def self.build(output_text = "Hello World", session_attributes = {}, end_session = false)
+      new(output_text, session_attributes, end_session).to_json
     end
   end
 end

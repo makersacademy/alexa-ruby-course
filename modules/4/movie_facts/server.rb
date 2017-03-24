@@ -13,7 +13,7 @@ post '/' do
     movie_list = Imdb::Search.new(requested_movie).movies
     movie = movie_list.first
 
-    return Alexa::Response.new(movie.plot_synopsis, { movieTitle: requested_movie }).to_json
+    return Alexa::Response.build(movie.plot_synopsis, { movieTitle: requested_movie })
   end
 
   if parsed_request["request"]["intent"]["name"] == "ClearSession"
@@ -43,5 +43,5 @@ post '/' do
     response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
   end
 
-  Alexa::Response.new(response_text, { movieTitle: movie_title }).to_json
+  Alexa::Response.build(response_text, { movieTitle: movie_title })
 end

@@ -1,7 +1,7 @@
 require 'alexa/response'
 
 RSpec.describe Alexa::Response do
-  subject(:response) { described_class.new }
+  subject(:response) { described_class.build }
 
   describe '#to_json' do
     it 'returns a JSON response with a custom string if provided' do
@@ -15,7 +15,7 @@ RSpec.describe Alexa::Response do
         }
       }.to_json
 
-      custom_response = described_class.new("Custom String").to_json
+      custom_response = described_class.build("Custom String")
       expect(custom_response).to eq expected_response
     end
 
@@ -33,7 +33,7 @@ RSpec.describe Alexa::Response do
         }
       }.to_json
 
-      session_response = described_class.new("Custom String", { sessionKey: "Session Value" }).to_json
+      session_response = described_class.build("Custom String", { sessionKey: "Session Value" })
       expect(session_response).to eq expected_response
     end
 
@@ -49,7 +49,7 @@ RSpec.describe Alexa::Response do
         }
       }.to_json
 
-      end_session_response = described_class.new("Custom String", {}, true).to_json
+      end_session_response = described_class.build("Custom String", {}, true)
       expect(end_session_response).to eq expected_response
     end
 
@@ -64,7 +64,7 @@ RSpec.describe Alexa::Response do
         }
       }.to_json
       
-      expect(response.to_json).to eq minimal_response
+      expect(response).to eq minimal_response
     end
   end
 end
