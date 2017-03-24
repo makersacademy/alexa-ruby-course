@@ -734,5 +734,806 @@ Our tests pass once again! Now let's replace those lines in `server.rb` with our
 
 ```ruby
 # in server.rb
+require 'sinatra'
+require 'json'
+require 'imdb'
+
+post '/' do 
+  parsed_request = JSON.parse(request.body.read)
+  session = parsed_request["session"]
+  this_is_the_first_request = session["new"]
+
+  if parsed_request["request"]["intent"]["name"] == "ClearSession"
+    # We'll tackle this response next
+    return {
+      version: "1.0",
+      response: {
+        outputSpeech: {
+          type: "PlainText",
+          text: "OK, what movie would you like to know about?"
+        },
+        shouldEndSession: true
+      }
+    }.to_json
+  end
+
+  if this_is_the_first_request
+    requested_movie = parsed_request["request"]["intent"]["slots"]["Movie"]["value"]
+    movie_list = Imdb::Search.new(requested_movie).movies
+    movie = movie_list.first
+
+    return Alexa::Response.build(movie.plot_synopsis, { movieTitle: requested_movie })
+  end
+
+  movie_title = session["attributes"]["movieTitle"]
+  movie_list = Imdb::Search.new(movie_title).movies
+  movie = movie_list.first
+
+  role = parsed_request["request"]["intent"]["slots"]["Role"]["value"]
+
+  if role == "directed"
+    response_text = "#{movie_title} was directed by #{movie.director.join}"
+  end
+
+  if role == "starred in"
+    response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
+  end
+
+  Alexa::Response.build(response_text, { movieTitle: movie_title })
+end
 ```
 
+Our next target is clearly the Alexa Response inside the `ClearSession` handler.
+
+### Extending the Response to End the Session
+
+We haven't yet extended our `Alexa::Response` object with the capacity to end a Session. As a result, we cannot extract this from `server.rb`:
+
+```ruby
+# inside server.rb, with some omissions for brevity
+
+if parsed_request["request"]["intent"]["name"] == "ClearSession"
+  # We'll tackle this response next
+  return {
+    version: "1.0",
+    response: {
+      outputSpeech: {
+        type: "PlainText",
+        text: "OK, what movie would you like to know about?"
+      },
+      # Here's the offending line
+      shouldEndSession: true
+    }
+  }.to_json
+end
+```
+
+Similarly to how we implemented `Alexa::Response`'s ability to manage Session Attributes, let's imagine how this design could work:
+
+```ruby
+# inside server.rb, with some omissions for brevity
+
+if parsed_request["request"]["intent"]["name"] == "ClearSession"
+  return Alexa::Response.build("OK, what movie would you like to know about?", {}, true)
+end
+```
+
+> This design is starting to feel a little unreadable: it's not immediately clear what an empty hash and boolean 'true' have to do with an `Alexa::Response`. We'll come to that during the refactor step.
+
+Here is a test for the new `end_session` boolean parameter:
+
+```ruby
+# inside spec/alexa_response_spec.rb
+
+it 'returns a JSON response with an endSessionRequest if provided' do
+  expected_response = {
+    version: "1.0",
+    response: {
+      outputSpeech: {
+        type: "PlainText",
+        text: "Hello World"
+      },
+      shouldEndSession: true
+    }
+  }.to_json
+
+  end_session_response = Alexa::Response.build("Hello World", {}, true)
+  expect(end_session_response).to eq expected_response
+end
+```
+
+To pass this test, we can easily insert another procedure into our hash construction in `Alexa::Response`:
+
+```ruby
+# inside lib/alexa/response.rb, with some omissions for brevity
+
+module Alexa
+  class Response
+    def initialize(response_text, session_attributes, end_session)
+      ...
+      response[:response][:shouldEndSession] = end_session if end_session
+    end
+  end
+end
+```
+
+Our test passes! Let's try it out in `server.rb` using the Service Simulator, and then let's refactor.
+
+### Refactoring for readability
+
+We've improved the design of our session-clearing response somewhat:
+
+```ruby
+# inside server.rb, with some omissions for brevity
+
+if parsed_request["request"]["intent"]["name"] == "ClearSession"
+  return Alexa::Response.build("OK, what movie would you like to know about?", {}, true)
+end
+```
+
+While this is clearly an improvement to the current mess of JSON construction, we can do better. From reading the parameter list given to `.build`, it's not immediately clear what an empty hash (`{}`) and boolean `true` have to do with an `Alexa::Response`. The following design is much clearer, as well as enshrining some domain concepts:
+
+```ruby
+# inside server.rb, with some omissions for brevity
+
+if parsed_request["request"]["intent"]["name"] == "ClearSession"
+  respose_text = "OK, what movie would you like to know about?"
+  return Alexa::Response.build(response_text: response_text, end_session: true)
+end
+```
+
+Let's upgrade our `Alexa::Response` across the board, to take named parameters. Our tests need to change first:
+
+```ruby
+# inside spec/alexa_response_spec.rb
+require 'alexa/response'
+
+RSpec.describe Alexa::Response do
+  subject(:response) { described_class.build }
+
+  describe '.build' do
+    it 'returns a JSON response with a custom string if provided' do
+      expected_response = {
+        version: "1.0",
+        response: {
+          outputSpeech: {
+              type: "PlainText",
+              text: "Custom String"
+            }
+        }
+      }.to_json
+
+      custom_response = described_class.build(response_text: "Custom String")
+      expect(custom_response).to eq expected_response
+    end
+
+    it 'returns a JSON response with session data if provided' do
+      expected_response = { 
+        version: "1.0",
+        sessionAttributes: {
+          sessionKey: "Session Value"
+        },
+        response: {
+          outputSpeech: {
+              type: "PlainText",
+              text: "Hello World"
+            }
+        }
+      }.to_json
+
+      session_response = described_class.build(session_attributes: { sessionKey: "Session Value" })
+      expect(session_response).to eq expected_response
+    end
+
+    it 'returns a JSON response with an endSessionRequest if provided' do
+      expected_response = {
+        version: "1.0",
+        response: {
+          outputSpeech: {
+            type: "PlainText",
+            text: "Hello World"
+          },
+          shouldEndSession: true
+        }
+      }.to_json
+
+      end_session_response = described_class.build(end_session: true)
+      expect(end_session_response).to eq expected_response
+    end
+
+    it 'returns a minimal JSON response otherwise' do
+      minimal_response = { 
+        version: "1.0",
+        response: {
+          outputSpeech: {
+              type: "PlainText",
+              text: "Hello World"
+            }
+        }
+      }.to_json
+      
+      expect(response).to eq minimal_response
+    end
+  end
+end
+```
+
+Now, so should our `Alexa::Response`. While we're in there, let's use Extract Method a bunch of times to pull some of the response-construction procedures out for greater clarity:
+
+```ruby
+# inside lib/alexa/response.rb
+require 'json'
+
+module Alexa
+  class Response < Hash
+    def initialize(response_text, session_attributes, end_session)
+      @response_text = response_text
+      @session_attributes = session_attributes
+      @end_session = end_session
+
+      set_version
+      set_session_attributes
+      set_response
+    end
+
+    def self.build(response_text: "Hello World", session_attributes: {}, end_session: false)
+      new(response_text, session_attributes, end_session).to_json
+    end
+
+    private
+
+    def set_version
+      self[:version] = "1.0"
+    end
+
+    def set_session_attributes
+      self[:sessionAttributes] = @session_attributes unless @session_attributes.empty?
+    end
+
+    def set_response
+      self[:response] = Hash.new
+      self[:response][:outputSpeech] = Hash.new
+      self[:response][:outputSpeech][:type] = "PlainText"
+      self[:response][:outputSpeech][:text] = @response_text
+      self[:response][:shouldEndSession] = @end_session if @end_session
+    end
+  end
+end
+```
+
+We can now use our upgraded `Alexa::Response` to replace a bunch of painful code inside `server.rb`:
+
+```ruby
+# in server.rb
+require 'sinatra'
+require 'json'
+require 'imdb'
+
+post '/' do 
+  parsed_request = JSON.parse(request.body.read)
+  session = parsed_request["session"]
+  this_is_the_first_request = session["new"]
+
+  if parsed_request["request"]["intent"]["name"] == "ClearSession"
+    response_text = "OK, what movie would you like to know about?"
+    Alexa::Response.build(response_text: response_text, end_session: true)
+  end
+
+  if this_is_the_first_request
+    requested_movie = parsed_request["request"]["intent"]["slots"]["Movie"]["value"]
+    movie_list = Imdb::Search.new(requested_movie).movies
+    movie = movie_list.first
+
+    response_text = movie.plot_synopsis
+
+    return Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: requested_movie })
+  end
+
+  movie_title = session["attributes"]["movieTitle"]
+  movie_list = Imdb::Search.new(movie_title).movies
+  movie = movie_list.first
+
+  role = parsed_request["request"]["intent"]["slots"]["Role"]["value"]
+
+  if role == "directed"
+    response_text = "#{movie_title} was directed by #{movie.director.join}"
+  end
+
+  if role == "starred in"
+    response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
+  end
+
+  Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: movie_title })
+end
+```
+
+Now, let's try upgrading our `Alexa::Request` to refactor a bunch of the other code.
+
+### Extending the Alexa Request to read from the Session
+
+We cannot immediately wrap the Sinatra request inside our `Alexa::Request`, because our controller code needs to be able to access the session. There are two main candidates for extensions to `Alexa::Request`, and we need to upgrade them both before we can replace code in `server.rb` with our Alexa Request object:
+
+1. Is this a new session?
+2. What is the value of a session attribute?
+
+We also need to add the ability to **read the IntentName** from an `Alexa::Request`. We'll do each of these refactors in turn.
+
+> Another way to think of these three extensions is: we need to eliminate references to `parsed_request` in `server.rb`.
+
+#### Extension 1: is this a new session?
+
+Here are the offending lines waiting to be extracted to the `Alexa::Request` object:
+
+```ruby
+# in server.rb, with omissions for brevity
+
+parsed_request = JSON.parse(request.body.read)
+session = parsed_request["session"]
+this_is_the_first_request = session["new"]
+```
+
+A much more pleasant design would be:
+
+```ruby
+# in server.rb, with omissions for brevity
+
+alexa_request = Alexa::Request.new(request)
+this_is_the_first_request = alexa_request.new_session?
+```
+
+Let's write a test for a `#new_session?` method on an `Alexa::Request` instance:
+
+```ruby
+# inside spec/alexa_request_spec.rb
+
+describe '#new_session?' do
+  it 'is true if this is a new session' do
+    # Let's use a relevant part of the JSON visible
+    # when a request is sent via the Service Simulator
+    request_json = {
+      "session": {
+        "sessionId": "id_string",
+        "new": true
+      }
+    }.to_json
+
+    sinatra_request = double("Sinatra::Request", body: StringIO.new(request_json))
+
+    expect(Alexa::Request.new(stubbed_request).new_session?).to be true
+  end
+
+  it 'is false otherwise' do
+    # Again, let's only use relevant JSON
+    request_json = {
+      "session": {
+        "sessionId": "id_string",
+        "new": true
+      }
+    }.to_json
+
+    expect(described_class.new(stubbed_request).new_session?).to be false
+  end
+end
+```
+
+Passing this test is fairly simple:
+
+```ruby
+# inside lib/alexa/request.rb, with some omissions for brevity
+module Alexa
+  class Request
+    def new_session?
+      @request["session"]["new"]
+    end
+  end
+end
+```
+
+#### Extension 2: What is the value of a session attribute?
+
+Here are the offending lines which could benefit from some refactoring:
+
+```ruby
+# inside server.rb, with some omissions for brevity
+
+parsed_request = JSON.parse(request.body.read)
+session = parsed_request["session"]
+...
+movie_title = session["attributes"]["movieTitle"]
+```
+
+A much more pleasant design would be:
+
+```ruby
+# inside server.rb, with some omissions for brevity
+
+alexa_request = Alexa::Request.new(request)
+...
+movie_title = alexa_request.session_attribute("movieTitle")
+```
+
+Let's write a test for a `#session_attribute` method that reads from the session in an `Alexa::Request` instance:
+
+```ruby
+# inside spec/alexa_request_spec.rb, with some omissions for brevity
+
+describe '#session_attribute' do
+  it 'is true if this is a new session' do
+    # Let's use a relevant part of the JSON visible
+    # when a request is sent via the Service Simulator
+    request_json = {
+      "session": {
+        "sessionId": "id_string",
+        "attributes": {
+          "movieTitle": "Titanic"
+        }
+      }
+    }.to_json
+
+    sinatra_request = double("Sinatra::Request", body: StringIO.new(request_json))
+
+    expect(Alexa::Request.new(stubbed_request).session_attribute("movieTitle")).to eq "Titanic"
+  end
+end
+```
+
+Again, passing this test is relatively simple:
+
+```ruby
+# inside lib/alexa/request.rb, with some omissions for brevity
+
+def session_attribute(attribute_name)
+  @request["session"]["attributes"][attribute_name]
+end
+```
+
+#### Extension 3: reading the `IntentName` from an `Alexa::Request`
+
+Here are the offending lines which could benefit from some refactoring:
+
+```ruby
+# inside server.rb, with some omissions for brevity
+
+parsed_request = JSON.parse(request.body.read)
+...
+if parsed_request["request"]["intent"]["name"] == "ClearSession"
+```
+
+A much more pleasant design would be:
+
+```ruby
+# inside server.rb, with some omissions for brevity
+
+alexa_request = Alexa::Request.new(request)
+...
+if alexa_request.intent_name == "ClearSession"
+```
+
+Let's write a test for an `#intent_name` method that reads the Intent Name on an `Alexa::Request` instance:
+
+```ruby
+# inside spec/alexa_request_spec.rb, with some omissions for brevity
+
+describe '#intent_name' do
+  it 'returns the Intent Name from the request' do
+    request_json = {
+      "request": {
+        "type": "IntentRequest",
+        "intent": {
+          "name": "IntentName"
+        }
+      }
+    }.to_json
+
+    sinatra_request = double("Sinatra::Request", body: StringIO.new(request_json))
+
+    expect(Alexa::Request.new(sinatra_request).intent_name).to eq "IntentName"
+  end
+end
+```
+
+Again, passing this test is fairly trivial:
+
+```ruby
+# inside lib/alexa/request.rb, with some omissions for brevity
+
+def intent_name
+  @request["request"]["intent"]["name"]
+end
+```
+
+With that, we are ready to replace a large chunk of `server.rb`, optimising for readability!
+
+### Refactoring `server.rb` with our new `Alexa::Request`
+
+Let's replace some of the clunkie `server.rb` code with our new `Alexa::Request` objects:
+
+```ruby
+# in server.rb
+require 'sinatra'
+require 'imdb'
+
+post '/' do 
+  alexa_request = Alexa::Request.new(request)
+
+  if alexa_request.intent_name == "ClearSession"
+    response_text = "OK, what movie would you like to know about?"
+    Alexa::Response.build(response_text: response_text, end_session: true)
+  end
+
+  if alexa_request.new_session?
+    requested_movie = alexa_request.slot_value("Movie")
+    movie_list = Imdb::Search.new(requested_movie).movies
+    movie = movie_list.first
+
+    response_text = movie.plot_synopsis
+
+    return Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: requested_movie })
+  end
+
+  movie_title = alexa_request.session_attribute("movieTitle")
+  movie_list = Imdb::Search.new(movie_title).movies
+  movie = movie_list.first
+
+  if alexa_request.session_attribute("Role") == "directed"
+    response_text = "#{movie_title} was directed by #{movie.director.join}"
+  end
+
+  if alexa_request.session_attribute("Role") == "starred in"
+    response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
+  end
+
+  Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: movie_title })
+end
+```
+
+That's much neater! Our framework is complete for now, ready for extending in modules 5 and 6.
+
+### OPTIONAL: Tidying up with a `Movie` model
+
+Our `server.rb` is looking much tidier, but it's still quite unpleasant. Just as in our Number Facts application, we have quite a lot of logic concerning 'movies', but no central representation of the domain concept of a `Movie`.
+
+To get towards this, let's extract subroutines that seem concerned with movies, and give them useful names:
+
+```ruby
+# in server.rb
+
+require 'sinatra'
+require 'imdb'
+
+post '/' do 
+  alexa_request = Alexa::Request.new(request)
+
+  if alexa_request.intent_name == "ClearSession"
+    response_text = "OK, what movie would you like to know about?"
+    Alexa::Response.build(response_text: response_text, end_session: true)
+  end
+
+  if alexa_request.new_session?
+    # We can use Extract Method here
+    return respond_with_movie_plot_synopsis(alexa_request)
+  end
+
+  # And here
+  respond_with_movie_details(alexa_request)
+end
+
+def respond_with_movie_plot_synopsis(alexa_request)
+  requested_movie = alexa_request.slot_value("Movie")
+  movie_list = Imdb::Search.new(requested_movie).movies
+  movie = movie_list.first
+
+  response_text = movie.plot_synopsis
+
+  return Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: requested_movie })
+end
+
+def respond_with_movie_details(alexa_request)
+  movie_title = alexa_request.session_attribute("movieTitle")
+  movie_list = Imdb::Search.new(movie_title).movies
+  movie = movie_list.first
+
+  if alexa_request.session_attribute("Role") == "directed"
+    response_text = "#{movie_title} was directed by #{movie.director.join}"
+  end
+
+  if alexa_request.session_attribute("Role") == "starred in"
+    response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
+  end
+
+  Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: movie_title })
+end
+```
+
+This is a pretty good start: already our `POST /` route is looking like a pretty simple representation of our rules from earlier:
+
+- If the user asks to clear the session, start a new session.
+- If the user is speaking for the first time, respond with the plot synopsis for the movie they ask for.
+- If the user is not speaking for the first time, read which movie they were talking about from the session and respond with more information about that movie.
+
+Let's kick off a `Movie` object with the biggest win: pulling that messy `Imdb::Search` code into an object. Here's how it could work:
+
+```ruby
+def respond_with_movie_plot_synopsis(alexa_request)
+  requested_movie = alexa_request.slot_value("Movie")
+  movie = Movie.find(requested_movie)
+
+  Alexa::Response.build(response_text: movie.plot_synopsis, session_attributes: { movieTitle: requested_movie })
+end
+```
+
+Let's write a test for an interface like this:
+
+```ruby
+# in spec/movie_spec.rb
+require 'movie'
+
+RSpec.describe Movie do
+  describe '.find' do
+  it 'delegates finding a movie to an Imdb client search' do
+      client = double("Imdb::Search")
+      expect(client).to receive_message_chain(:new, :movies, :first)
+
+      described_class.find("Some Movie Title", client)
+    end
+  end
+end
+```
+
+The implementation for this is pretty simple:
+
+```ruby
+# in lib/movie.rb
+require 'imdb'
+
+class Movie
+  def self.find(movie_title, client = Imdb::Search)
+    movie_list = client.new(movie_title).movies
+    movie_list.first
+  end
+end 
+```
+
+This moves our controller code in a much nicer direction:
+
+```ruby
+# in server.rb
+
+require 'sinatra'
+require 'imdb'
+
+post '/' do 
+  alexa_request = Alexa::Request.new(request)
+
+  if alexa_request.intent_name == "ClearSession"
+    response_text = "OK, what movie would you like to know about?"
+    Alexa::Response.build(response_text: response_text, end_session: true)
+  end
+
+  return respond_with_movie_plot_synopsis(alexa_request) if alexa_request.new_session?
+
+  respond_with_movie_details(alexa_request)
+end
+
+def respond_with_movie_plot_synopsis(alexa_request)
+  movie = Movie.find(alexa_request.slot_value("Movie"))
+
+  return Alexa::Response.build(response_text: movie.plot_synopsis, session_attributes: { movieTitle: movie.title })
+end
+
+def respond_with_movie_details(alexa_request)
+  movie = Movie.find(alexa_request.session_attribute("movieTitle"))
+
+  if alexa_request.session_attribute("Role") == "directed"
+    response_text = "#{movie_title} was directed by #{movie.director.join}"
+  end
+
+  if alexa_request.session_attribute("Role") == "starred in"
+    response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
+  end
+
+  Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: movie.title })
+end
+```
+
+While this is much better, there are some convenience opportunities: namely, why construct the `response_text` variables in the `respond_with_movie_details` method inside the controller? We could hand that off to the `Movie` class. Ditto for `movie.director`, and `movie.cast_members`.
+
+Here are some tests for these convenience methods:
+
+```ruby
+# inside spec/movie_spec.rb, with some omissions for brevity
+
+describe '#cast_list' do
+  it 'returns a human-readable string of cast members' do
+    imdb_record = double("Imdb::Movie", title: "Movie", cast_members: ["Famous star 1", "Famous star 2"])
+
+    expect(described_class.new(imdb_record).cast_members).to eq "Movie starred Famous star 1, Famous star 2"
+  end
+end
+
+describe '#directors' do
+  it 'returns a human-readable string of director names' do
+    imdb_record = double("Imdb::Movie", title: "Movie", director: ["Famous director"])
+
+    expect(described_class.new(imdb_record).directors).to eq "Movie was directed by Famous director"
+  end
+end
+```
+
+And an implementation that also includes `Forwardable` to delegate some methods through `Movie` to the underlying record retrieved via the `Imdb` gem:
+
+```ruby
+# inside lib/movie.rb
+
+require 'imdb'
+require 'forwardable'
+
+class Movie
+  extend Forwardable
+  def_delegators :@imdb_record, :title, :plot_synopsis
+
+  def initialize(imdb_record)
+    @imdb_record = imdb_record
+  end
+
+  def self.find(movie_title, client = Imdb::Search)
+    movie_list = client.new(movie_title).movies
+    new(movie_list.first)
+  end
+
+  def cast_members
+    "#{ title } starred #{ @imdb_record.cast_members.join(", ") }"
+  end
+
+  def directors
+    "#{ title } was directed by #{ @imdb_record.director.join }"
+  end
+end
+```
+
+This allows us to achieve the following in the controller:
+
+```ruby
+# inside server.rb
+require 'sinatra'
+require './lib/alexa/request'
+require './lib/alexa/response'
+require './lib/movie'
+
+### CONTROLLER CODE ###
+
+post '/' do 
+  alexa_request = Alexa::Request.new(request)
+
+  if alexa_request.intent_name == "ClearSession"
+    response_text = "OK, what movie would you like to know about?"
+    return Alexa::Response.build(response_text: response_text, end_session: true)
+  end
+
+  return respond_with_movie_plot_synopsis(alexa_request) if alexa_request.new_session?
+
+  respond_with_movie_details(alexa_request)
+end
+
+### CONTROLLER CONVENIENCE METHODS ###
+
+def respond_with_movie_plot_synopsis(alexa_request)
+  movie = Movie.find(alexa_request.slot_value("Movie"))
+  Alexa::Response.build(response_text: movie.plot_synopsis, session_attributes: { movieTitle: movie.title })
+end
+
+def respond_with_movie_details(alexa_request)
+  movie = Movie.find(alexa_request.session_attribute("movieTitle"))
+
+  response_text = movie.directors if alexa_request.slot_value("Role") == "directed"
+  response_text = movie.cast_members if alexa_request.slot_value("Role") == "starred in"
+
+  Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: movie.title })
+end
+```
+
+Much nicer!
+
+## Wrapping up
+
+In this module, we've covered a variety of techniques to extract a framework for interacting with Amazon Alexa using Ruby. This framework is available [here](http://github.com/sjmog/ralyxa) to play with and extend, if you wish.
