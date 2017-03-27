@@ -2,8 +2,8 @@
 
 We’re going to build a fact-checking mechanism so users can ask for facts about particular numbers. Here are some things users will be able to ask Alexa:
 
-> Alexa, ask NumberFacts to tell me a trivia fact about 42.
-> Alexa, ask NumberFacts to tell me a math fact about 5.
+> Alexa, ask Number Facts to tell me a trivia fact about 42
+> Alexa, ask Number Facts to tell me a math fact about 5
 
 Users will be able to choose:
 - a number (any number!), and 
@@ -15,11 +15,11 @@ Alexa will respond with an interesting fact about that number, specific to that 
 
 By the end of this section, we’ll be able to interact with a simplified version of our final feature. Users will be able to ask:
 
-> Alexa, ask NumberFacts about 42.
+> Alexa, ask Number Facts about 42
 
 Alexa will respond with a trivia fact about the number **42**. Later, we’ll build on this feature to add trivia responses for all sorts of numbers.
 
-Sign in to the [Alexa Developer Portal](https://developer.amazon.com/alexa), and set up a new skill. Let’s call it **NumberFacts**, with an invocation name of **NumberFacts**.
+Sign in to the [Alexa Developer Portal](https://developer.amazon.com/alexa), and set up a new skill. Let’s call it **Number Facts**, with an invocation name of **Number Facts**.
 
 > You could edit the skill you set up in module 1, or practice making a new one.
 
@@ -29,7 +29,7 @@ Let’s start by defining a minimal Intent Schema, with a single Intent:
 {
   "intents": [
     {
-      "intent": "NumberFacts"
+      "intent": "NumberFact"
     }
   ]
 }
@@ -65,9 +65,13 @@ post '/' do
 end
 ```
 
-Great! Once we start the local server, start ngrok, and provide our ngrok HTTPS Endpoint to our Skill, we can use the Service Simulator to test a basic interaction. Or, if you have an Alexa device registered to your account, you can test the connection using any Alexa-enabled hardware. When we ask:
+Great! Once we start the local server, start ngrok, and provide our ngrok HTTPS Endpoint to our Skill, we can use the Service Simulator to test a basic interaction. Or, if you have an Alexa device registered to your account, you can test the connection using any Alexa-enabled hardware. 
 
-> Alexa, ask NumberFacts about 42
+> Struggling to remember how to set up a local, tunnelled environment with Alexa? There's a guide in the first module blog post [here](https://developer.amazon.com/blogs/post/105df30e-9890-4a8c-9caf-5de1c8ff86cb/makers-academy-s-alexa-series-how-to-build-a-hello-world-skill-with-ruby).
+
+When we ask:
+
+> Alexa, ask Number Facts about 42
 
 Alexa responds with:
 
@@ -106,24 +110,24 @@ post '/' do
 end
 ```
 
-Head to the Service Simulator (or any Alexa device) and see that you can now make a request to NumberFacts for random trivia about the number 42. This is a great start! But what about trivia for other numbers?
+Head to the Service Simulator (or any Alexa device) and see that you can now make a request to Number Facts for random trivia about the number 42. This is a great start! But what about trivia for other numbers?
 
 ## 2. Using built-in Slots to pass parameters to our application
 
-In section 1, we weren't able to pass any parameters to our application. As a result, we could only ask NumberFacts to tell us about ’42’. If a user wanted to know about any other number, Alexa would just tell them about 42.
+In section 1, we weren't able to pass any parameters to our application. As a result, we could only ask Number Facts to tell us about ’42’. If a user wanted to know about any other number, Alexa would just tell them about 42.
 
 We’d like our users to receive trivia facts for all sorts of numbers. Users should be able to ask:
 
-> Alexa, ask NumberFacts about <number>
+> Alexa, ask Number Facts about {Number}
 
-Where `<number>` is any number. Our users should hear a response concerning that number, and that number only.
+Where `{Number}` is any number. Our users should hear a response concerning that number, and that number only.
 
 To do this, we need to provide a parameter to our Intent and Utterance. In Alexa’s terminology, we provide parameters as **Slots**. Slots need a **name** and a **type**.
 
 Let's start from the Utterance: what we want our users to be able to say. To reference a Slot in an Utterance, we use curly brackets ({}) around the name we will use for that Slot.
 
 ```
-NumberFacts about {Number}
+NumberFact about {Number}
 ```
 
 Now let's add that Slot into our Intent Schema, with the same name we're referencing in our Utterance: `Number`.
@@ -150,19 +154,21 @@ Now let's add that Slot into our Intent Schema, with the same name we're referen
 
 We’ve chosen the `AMAZON.NUMBER` type, which will convert any spoken numbers to digits:
 
-> Alexa, ask NumberFacts about fifteen
+> Alexa, ask Number Facts about fifteen
 
 Becomes
 
-> Alexa, ask NumberFacts about 15
+> Alexa, ask Number Facts about 15
 
-There are many [built-in Slot types](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/built-in-intent-ref/slot-type-reference). You can also define additional types (we’ll do this in the next section).
+There are many [built-in Slot types](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/built-in-intent-ref/slot-type-reference). You can also define custom slot types (we’ll do this in the next section).
+
+> Built-in Slot types are really handy for capturing user input for common use cases, such as numbers, dates, cities, and so on.
 
 Before we change any Ruby code, let’s observe how adding a Slot modifies the incoming request from Amazon’s Service Simulator. We can log the incoming request in our Sinatra application using `request.body.read` within our `post '/'` route. 
 
 Using the Service Simulator, let's cause Amazon to send a request by using the phrase:
 
-> Alexa, ask NumberFacts about 4.
+> Alexa, ask Number Facts about 4
 
 In our Sinatra application, notice the Slot value passed in the request:
 
@@ -207,7 +213,7 @@ post '/' do
 end
 ```
 
-Testing in the Service Simulator: users can now provide an arbitrary number to our NumberFacts skill, and receive trivia about that number. Great!
+Testing in the Service Simulator: users can now provide an arbitrary number to our Number Facts skill, and receive trivia about that number. Great!
 
 Let’s make one final upgrade: asking for facts of a specific type.
 
@@ -215,17 +221,21 @@ Let’s make one final upgrade: asking for facts of a specific type.
 
 So far, users can ask Alexa:
 
-> Alexa, ask NumberFacts about <number>
+> Alexa, ask Number Facts about {Number}
 
-Where `<number>` is any number. Users will hear an interesting fact about any given number.
+Where `{Number}` is any number. Users will hear an interesting fact about any given number.
 
 However, Numbers API can provide two different kinds of facts: trivia facts, and math facts. We’d like users to be able to ask:
 
-> Alexa, ask NumberFacts to tell me a <fact type> fact about <number>
+> Alexa, ask Number Facts to tell me a {FactType} fact about {Number}
 
-`<fact type>` is either a ‘trivia’ fact or a ‘math’ fact. 
+`{FactType}` is either a ‘trivia’ fact or a ‘math’ fact. 
 
-Because we’re passing another piece of variable information to our Intent, we’ll need to define another Slot. However, where the built-in `AMAZON.NUMBER` slot restricted us to numbers only, there are no built-in Slots that will restrict us to the words ‘trivia’ or ‘math’. We have to make our own.
+Because we’re passing another piece of variable information to our Intent, we’ll need to define another Slot.
+
+> Slots _do not_ restrict user input to certain values. Instead, they guide interpretation of the user's words towards those terms.
+
+However, where the built-in `AMAZON.NUMBER` slot restricted us to numbers only, there are no built-in Slots that will restrict us to the words ‘trivia’ or ‘math’. We have to make our own.
 
 Let's head to the Interaction Model pane in the Alexa Skills Developer Console, and add a new Custom Slot type. We'll call this Custom Slot type `FACT_TYPE`. There are two possible Values for this Custom Slot type: `trivia` and `math`. They must be provided separated by a newline, like so:
 
@@ -233,6 +243,8 @@ Let's head to the Interaction Model pane in the Alexa Skills Developer Console, 
 trivia
 math
 ```
+
+> These values act as training data for Alexa's voice recognition. They don't restrict users to just the given words: users can use different words in addition to these two. For instance, if a user said "Alexa, ask Number Facts to tell me a bicycle fact about 42", the word 'bicycle' would be sent as part of the request.
 
 Now we've defined our Custom Slot type, we can go ahead and rewrite our Utterance to include the Slot:
 
@@ -261,6 +273,8 @@ And provide the Slot to our Intent:
   ]
 }
 ```
+
+> Remember to hit 'Save' in the developer portal to update the interaction model.
 
 Now that we're passing a fact type through to our Sinatra Application, we can grab the fact type similarly to how we did the number. Once we have it, we can pass it directly to the Numbers API:
 
@@ -292,8 +306,10 @@ end
 
 Let’s test in the Service Simulator, or in any Alexa-enabled device:
 
-> Alexa, ask NumberFacts to tell me a math fact about 17.
+> Alexa, ask Number Facts to tell me a math fact about 17
 
 It works!
 
-> EXTRA CREDIT: Notice how entering an undefined phrase, e.g. "Alexa, ask NumberFacts about 12 math", still invokes the Intent. As a Ruby exercise, try to handle users' poorly-formed phrases gracefully via the Sinatra application.
+> EXTRA CREDIT: Notice how entering an undefined phrase, e.g. "Alexa, ask Number Facts about 12 math", still invokes the Intent. As a Ruby exercise, try to handle users' poorly-formed phrases gracefully via the Sinatra application.
+
+> EXTRA CREDIT: Remember that Slot Values do not list the _possible_ values a user can enter, only the _valid_ values your application accepts. Since users can say whatever they like in addition to "trivia" and "math", upgrade your Sinatra application to handle cases where a user asks for a Fact Type you don't recognise.
