@@ -3,6 +3,7 @@
 We’re going to build a fact-checking mechanism so users can ask for facts about particular numbers. Here are some things users will be able to ask Alexa:
 
 > Alexa, ask Number Facts to tell me a trivia fact about 42
+
 > Alexa, ask Number Facts to tell me a math fact about 5
 
 Users will be able to choose:
