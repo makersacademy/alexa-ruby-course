@@ -176,13 +176,13 @@ In our Sinatra application, notice the Slot value passed in the request:
 ```json
 "intent": {
   "name": "NumberFact", 
-  "slots": [ 
+  "slots": { 
     "Number": { 
       "name": "Number", 
       "value": "4"
       }
     }
-  ]
+  }
 }
 ```
 
