@@ -8,13 +8,23 @@ We’re going to build an application that allows users to ask this:
 
 Alexa should respond with some facts about the movie ‘Titanic’. Then, our users should be able to ask context-based questions, such as:
 
-> Alexa, ask Movie Facts who directed that
+> Alexa, who directed that
 
-> Alexa, ask Movie Facts who starred in that
+> Alexa, who starred in that
 
 Alexa should respond with the director of ‘Titanic’, and a cast list. 
 
 Alexa should remember that the user asked about ‘Titanic’ in the first request, and limit her response to subsequent requests to the context of the first.
+
+Additionally, a user will be able to ask:
+
+> Alexa, start over
+
+And then follow up with:
+
+> Alexa, ask about Beauty and the Beast
+
+Again, Alexa should then answer questions about 'Beauty and the Beast'.
 
 ## 1. An introduction to Sessions
 
@@ -113,11 +123,11 @@ Notice that the `session.new` key tells us that this is a **new** session. Now l
 }
 ```
 
-Alexa will remember that this user has already asked Movie Facts a question, and mention that in the request: the session `"new"` value has changed from `true` to `false`.
+Alexa remembers that this user has already interacted with Movie Facts, and mentions that in the request: the session `"new"` value has changed from `true` to `false`.
 
 #### Responding depending on the state of the Session
 
-Now that we know this, let’s upgrade our application to respond with two different strings, depending on whether this is the first question the user has asked:
+Now that we know this, let’s upgrade our application to respond with two different strings, depending on whether this is the first question the user has asked to Movie Facts:
 
 ```ruby
 require 'sinatra'
@@ -125,7 +135,7 @@ require 'json'
 
 post '/' do 
   parsed_request = JSON.parse(request.body.read)
-  this_the_first_question = parsed_request["session"]["new"]
+  this_is_the_first_question = parsed_request["session"]["new"]
 
   if this_is_the_first_question
     return { 
@@ -192,37 +202,65 @@ Using `puts` to output the request body, notice how the request now contains a r
   "attributes"=>{"numberOfRequests"=>1}
 ```
 
-Now that the user has initialised the number of requests in their first interaction with Alexa, we can increment it in each subsequent interaction:
+Now that the user has initialised the number of requests in their first interaction with Movie Facts, we can increment it in each subsequent interaction:
 
 ```ruby
 # for brevity, here's just the Ruby code for subsequent responses
+
+# grab the numberOfRequests attribute from the Session Attributes,
+# and increment it by 1
 number_of_requests = parsed_request["session"]["attributes"]["numberOfRequests"] + 1
 
-  return {
-    version: "1.0",
-    sessionAttributes: {
-      numberOfRequests: number_of_requests
-    },
-    response: {
-      outputSpeech: {
-        type: "PlainText",
-        text: "This is question number #{ number_of_requests }"
-      }
+return {
+  version: "1.0",
+  sessionAttributes: {
+    numberOfRequests: number_of_requests
+  },
+  response: {
+    outputSpeech: {
+      type: "PlainText",
+      text: "This is question number #{ number_of_requests }"
     }
-  }.to_json
+  }
+}.to_json
 ```
 
 Now, we are persisting – and acting on – data across multiple interactions. Try it out in the Service Simulator!
 
 > In the Service Simulator, remember to hit the 'Reset' button, or refresh the page, to start a new session with Alexa.
 
-#### Starting a Session over
+#### Different ways of restarting a Session
 
-One final thing – what about if we want to allow users to go back to the beginning? To do that, we’d need to clear the Session.
+One final thing – what about if we want to allow users to start the count over? To do that, we have two choices: 
+
+1. End the Session.
+2. Clear the Session Attributes.
+
+These should be used in two different circumstances:
+
+1. **End the Session** when Alexa **'tells'** the user something. For instance, "Goodbye."
+2. **Clear the Session Attributes** when Alexa **'asks'** the user something. For instance, "Okay, starting over. Would you like to talk to me?"
+
+The user's experience is different in each case:
+
+1. **End the Session**: The user has to start the interaction over from the beginning, by asking: "Alexa, ask Movie Facts to talk to me". This is similar to the user 'logging out' of a web app.
+2. **Clear the Session Attributes**: The existing Session continues, but the application 'forgets' everything that's happened so far. The user can just say "Alexa, talk to me" (i.e. no Invocation Name is required). This is similar to the user restarting some process in a web app, _without 'logging out'_.
 
 Let’s allow users to say:
 
-> Alexa, ask Movie Facts to start over.
+> Alexa, start over.
+
+Alexa should respond with:
+
+> Okay, starting over. Would you like to talk to me?
+
+And the user should answer with:
+
+> Alexa, talk to me.
+
+So we are going for **Option number 2: Clearing the Session Attributes**.
+
+#### Starting a Session over using `AMAZON.StartOverIntent`
 
 Amazon provides us with an Intent for starting an interaction from the beginning: `AMAZON.StartOverIntent`. Rather than defining our own, let's use the built-in Intent.
 
@@ -243,48 +281,69 @@ Because this is a Built-in Intent, we don't need to define an Utterance for it. 
 }
 ```
 
-In our Sinatra application, let’s add a response just for requests to clear the Session. 
-
-There are two ways we can clear a Session:
-
-1. End the actual Session (the Session Attributes will be removed also), by using `shouldEndSession: true`.
-2. Just clear the Session Attributes, by setting `sessionAttributes` to `{}`.
-
-The user's experience is different in each case:
-
-1. The user has to start the interaction over from the beginning, by asking: "Alexa, ask Movie Facts to talk to me".
-2. The application restarts from the beginning, but the user can just say "Alexa, talk to me" (i.e. no Invocation Name is required).
-
-In this case, we want the users to start a 'brand new' interaction. That is, they should string together the following phrases:
-
-> Alexa, start over
-
-> Alexa, ask Movie Facts to talk to me
-
-To achieve this, and start the session from scratch, we should add `shouldEndSession: true` to the response:
+In our Sinatra application, let’s add a response just for requests to clear the Session. In the response, we **clear the Session Attributes**, but **don't end the Session**:
 
 ```ruby
 if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
   return {
     version: "1.0",
+    # adding this line to a response will
+    # remove any Session Attributes
+    sessionAttributes: {},
     response: {
       outputSpeech: {
         type: "PlainText",
-        text: "Let's start over."
+        text: "Okay, starting over. What movie would you like to know about?"
       },
-    # adding this line to a response will reset the Session
-    # and remove any Session Attributes
+      # Let's be really clear that we're not
+      # ending the session, just restarting it
+      shouldEndSession: false
+    }
+  }.to_json
+end
+```
+
+This response will now start the Session over. However, when the user next says "Alexa, talk to me", their session will not be "new": it'll just have **empty Session Attributes**. So, we need to upgrade our `this_is_the_first_question` variable:
+
+```ruby
+# This is the 'first question' IF
+# the 'new' session key is true OR
+# the Session Attributes are empty
+this_is_the_first_question = parsed_request["session"]["new"] || parsed_request["session"]["attributes"].empty?
+```
+
+In fact, we can refactor this: **any 'new' session will have empty Session Attributes anyway**. So our final `this_is_the_first_question` variable looks like this:
+
+```ruby
+this_is_the_first_question = parsed_request["session"]["attributes"].empty?
+```
+
+#### Ending Sessions
+
+You can end a session by setting `shouldEndSession` to `true` in the response. If you do this, you should **tell the user the session has ended**. In the example above, we could respond:
+
+```ruby
+return {
+  version: "1.0",
+  response: {
+    outputSpeech: {
+      type: "PlainText",
+      text: "Goodbye."
+    },
+    # End the session, and
+    # clear the Session Attributes
     shouldEndSession: true
   }
 }.to_json
 ```
 
-> As well as restarting a session using a built-in Intent, users can **end** a session any time in one of three circumstances:
-> 1. The user says “exit”,
-> 2. The user does not respond, or says something that does not match an intent you have defined
-> 3. An error occurs.
+As well as restarting a session using a built-in Intent, users can **end** a session any time in one of three circumstances:
 
-> In either of these cases, your Sinatra Application will receive a special type of request: a `SessionEndedRequest`. Your application cannot return a response to `SessionEndedRequest`s, but you may wish to use these requests to do some cleanup.
+1. The user says “exit”,
+2. The user does not respond, or says something that does not match an intent you have defined
+3. An error occurs.
+
+In either of these cases, your Sinatra Application will receive a special type of request: a `SessionEndedRequest`. Your application cannot return a response to `SessionEndedRequest`s, but you may wish to use these requests to do some cleanup.
 
 Now a user can reset their session, and start the question count over! Now let’s do something a little more complex.
 
@@ -325,9 +384,9 @@ require 'imdb'
 
 post '/' do 
   parsed_request = JSON.parse(request.body.read)
-  this_is_the_first_request = parsed_request["session"]["new"]
+  this_is_the_first_question = parsed_request["session"]["attributes"].empty?
 
-  if this_is_the_first_request
+  if this_is_the_first_question
     # Fetch the name of the movie the user wanted information about
     requested_movie = parsed_request["request"]["intent"]["slots"]["Movie"]["value"]
     # Search IMDb for all movies matching that name
@@ -339,10 +398,10 @@ post '/' do
       version: "1.0",
       response: {
         outputSpeech: {
-            type: "PlainText",
-            # Return the plot synopsis for that movie to the user
-            text: movie.plot_synopsis
-          }
+          type: "PlainText",
+          # Return the plot synopsis for that movie to the user
+          text: movie.plot_synopsis
+        }
       }
     }.to_json
   end
@@ -368,7 +427,7 @@ We’d love our users to ask follow-up questions about the movie they initially 
 We can persist the title of the requested movie after our initial request, using the Session Attributes:
 
 ```ruby
-if this_is_the_first_request
+if this_is_the_first_question
   requested_movie = parsed_request["request"]["intent"]["slots"]["Movie"]["value"]
   movie_list = Imdb::Search.new(requested_movie).movies
   movie = movie_list.first
@@ -489,7 +548,7 @@ if parsed_request["request"]["intent"]["name"] == "FollowUp"
 end
 ```
 
-#### Handling multiple Intents
+#### Routing multiple Intents
 
 We now have three possible Intents (as well as numerous Built-in Intents) the user can use: `AMAZON.StartOverIntent`, `MovieFacts`, and `FollowUp`. In each case, our Sinatra application does something different:
 
@@ -499,7 +558,7 @@ We now have three possible Intents (as well as numerous Built-in Intents) the us
 
 Your Intent Schema will generally tie one-to-one with actions in your application. In other words, **our `post /` route is acting as a kind of router, with Intents as the possible routes**.
 
-Let's upgrade our code to reflect that:
+As a result of this three-intent system, we no longer need to know if `this_is_the_first_question`. Let's upgrade our code to reflect that:
 
 ```ruby
 require 'sinatra'
@@ -513,12 +572,12 @@ post '/' do
   if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
     return {
       version: "1.0",
+      sessionAttributes: {},
       response: {
         outputSpeech: {
           type: "PlainText",
           text: "OK, what movie would you like to know about?"
-        },
-        shouldEndSession: true
+        }
       }
     }.to_json
   end
@@ -589,7 +648,7 @@ Alexa responds with “In 1996, treasure hunter Brock Lovett…”: the plot syn
 
 Alexa responds with "Titanic was directed by James Cameron”. Great! And, because we’re storing the movie title in the Session Attributes, our users can continue querying:
 
-> Alexa, who starred in that?
+> Alexa, who starred in that
 
 Alexa responds with a list of cast members for the 1997 movie _Titanic_. And, because we’ve added a Session-clearing intent, users can ask:
 

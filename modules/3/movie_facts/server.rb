@@ -4,17 +4,17 @@ require 'imdb'
 
 post '/' do 
   parsed_request = JSON.parse(request.body.read)
-  session = parsed_request["session"]
 
   if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
     return {
       version: "1.0",
       response: {
+        sessionAttributes: {},
         outputSpeech: {
           type: "PlainText",
           text: "OK, what movie would you like to know about?"
         },
-        shouldEndSession: true
+        shouldEndSession: false
       }
     }.to_json
   end
@@ -39,7 +39,7 @@ post '/' do
   end
 
   if parsed_request["request"]["intent"]["name"] == "FollowUp"
-    movie_title = session["attributes"]["movieTitle"]
+    movie_title = parsed_request["session"]["attributes"]["movieTitle"]
     movie_list = Imdb::Search.new(movie_title).movies
     movie = movie_list.first
 
