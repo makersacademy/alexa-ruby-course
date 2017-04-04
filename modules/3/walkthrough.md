@@ -738,7 +738,7 @@ Now that we've implemented some more signposting for the user, our skill is easi
 
 ### Extra Credits
 
-> EXTRA CREDIT 1: It’s can take a while to search IMDb and then whittle down the response to a single movie. Using a more sophisticated set of Session Attributes, try persisting information relevant to the movie in the session, and extracting subsequent user requests from the session instead of querying IMDb.
+> EXTRA CREDIT 1: It can take a while to search IMDb and then whittle down the response to a single movie. Using a more sophisticated set of Session Attributes, try persisting information relevant to the movie in the session, and extracting subsequent user requests from the session instead of querying IMDb.
 
 > EXTRA CREDIT 2: Our codebase is looking pretty scrappy, and it’s highly procedural. There are a few things that feel like they’re violating the ‘Don’t Repeat Yourself’ rule by duplicating knowledge about the system at several points. Try refactoring the procedural codebase into something a little more OO. If you do it right, you’ll wind up with the start of a useful framework that could abstract some of the messy JSON manipulation we’ve been doing. This will be the subject of module 4.
 
