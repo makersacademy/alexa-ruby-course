@@ -6,11 +6,11 @@ We’re going to build an application that allows users to ask this:
 
 > Alexa, ask Movie Facts about Titanic
 
-Alexa should respond with some facts about the movie ‘Titanic’. Then, our users should be able to ask context-based questions, such as:
+Alexa should respond with some facts about the movie ‘Titanic’. Then, our users should be able to ask context-based questions _without restating the Invocation Name 'Movie Facts'_, such as:
 
-> Alexa, who directed that
+> Who directed that
 
-> Alexa, who starred in that
+> Who starred in that
 
 Alexa should respond with the director of ‘Titanic’, and a cast list. 
 
@@ -18,11 +18,11 @@ Alexa should remember that the user asked about ‘Titanic’ in the first reque
 
 Additionally, a user will be able to ask:
 
-> Alexa, start over
+> Start over
 
 And then follow up with:
 
-> Alexa, ask about Beauty and the Beast
+> Ask about Beauty and the Beast
 
 Again, Alexa should then answer questions about 'Beauty and the Beast'.
 
@@ -244,11 +244,11 @@ These should be used in two different circumstances:
 The user's experience is different in each case:
 
 1. **End the Session**: The user has to start the interaction over from the beginning, by asking: "Alexa, ask Movie Facts to talk to me". This is similar to the user 'logging out' of a web app.
-2. **Clear the Session Attributes**: The existing Session continues, but the application 'forgets' everything that's happened so far. The user can just say "Alexa, talk to me" (i.e. no Invocation Name is required). This is similar to the user restarting some process in a web app, _without 'logging out'_.
+2. **Clear the Session Attributes**: The existing Session continues, but the application 'forgets' everything that's happened so far. The user can just say "Talk to me" (i.e. no Invocation Name is required). This is similar to the user restarting some process in a web app, _without 'logging out'_.
 
 Let’s allow users to say:
 
-> Alexa, start over.
+> Start over.
 
 Alexa should respond with:
 
@@ -256,9 +256,9 @@ Alexa should respond with:
 
 And the user should answer with:
 
-> Alexa, talk to me.
+> Talk to me.
 
-So we are going for **Option number 2: Clearing the Session Attributes**.
+Since we don't want the user to restate the Invocation Name, we are going for **Option number 2: Clearing the Session Attributes**.
 
 #### Starting a Session over using `AMAZON.StartOverIntent`
 
@@ -351,7 +351,7 @@ Now a user can reset their session, and start the question count over! Now let�
 
 First, we want users to be able to ask:
 
-> Alexa, ask Movie Facts about some movie name
+> Alexa, ask Movie Facts about {some movie name}
 
 Let’s upgrade our first Utterance to respond to information about movies:
 ```
@@ -454,11 +454,11 @@ Now we can access the movie title on subsequent requests.
 
 We want our users to be able to query for information about the movie, such as:
 
-> Alexa, who directed that
+> Who directed that
 
-> Alexa, who starred in that
+> Who starred in that
 
-Since finding out more about a movie is a new 'intent' on the part of the user, let's define a new Intent.
+Since finding out more about a movie is a new 'intent' on the part of the user, let's define a new Intent in our Intent Schema, called `FollowUp`.
 
 Let’s create an Utterance for this:
 
@@ -644,17 +644,21 @@ Let’s test this out in the Service Simulator, or on any Alexa-enabled device. 
 
 Alexa responds with “In 1996, treasure hunter Brock Lovett…”: the plot synopsis for Titanic. But who directed it?
 
-> Alexa, who directed that
+> Who directed that
 
 Alexa responds with "Titanic was directed by James Cameron”. Great! And, because we’re storing the movie title in the Session Attributes, our users can continue querying:
 
-> Alexa, who starred in that
+> Who starred in that
 
 Alexa responds with a list of cast members for the 1997 movie _Titanic_. And, because we’ve added a Session-clearing intent, users can ask:
 
-> Alexa, start over
+> Start over
 
-And they’ll be offered the chance to start querying a new movie. Awesome!
+And they’ll be offered the chance to start querying a new movie. When they query the new movie, the user doesn't have to state the Invocation Name, or 'Alexa':
+
+> Ask about Beauty and the Beast
+
+Awesome!
 
 ## 4. Improving the User Experience (UX)
 
