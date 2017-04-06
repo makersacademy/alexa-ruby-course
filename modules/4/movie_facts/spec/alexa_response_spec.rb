@@ -53,6 +53,22 @@ RSpec.describe Alexa::Response do
       expect(end_session_response).to eq expected_response
     end
 
+    it 'returns a JSON response that "starts over" by clearing the Session Attributes if provided' do
+      expected_response = {
+        version: "1.0",
+        sessionAttributes: {},
+        response: {
+          outputSpeech: {
+            type: "PlainText",
+            text: "Hello World"
+          }
+        }
+      }.to_json
+
+      start_over_response = described_class.build(start_over: true)
+      expect(start_over_response).to eq expected_response
+    end
+
     it 'returns a minimal JSON response otherwise' do
       minimal_response = { 
         version: "1.0",

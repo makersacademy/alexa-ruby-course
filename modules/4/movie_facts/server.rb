@@ -8,17 +8,25 @@ require './lib/movie'
 post '/' do 
   alexa_request = Alexa::Request.new(request)
 
-  if alexa_request.intent_name == "ClearSession"
-    response_text = "OK, what movie would you like to know about?"
-    return Alexa::Response.build(response_text: response_text, end_session: true)
+  case alexa_request.intent_name
+  when "AMAZON.StartOverIntent"
+    respond_with_start_over
+  when "MovieFacts"
+    respond_with_movie_plot_synopsis(alexa_request)
+  when "FollowUp"
+    respond_with_movie_details(alexa_request)
+  else
+    respond_with_unknown
   end
-
-  return respond_with_movie_plot_synopsis(alexa_request) if alexa_request.new_session?
-
-  respond_with_movie_details(alexa_request)
 end
 
 ### CONTROLLER CONVENIENCE METHODS ###
+
+def respond_with_start_over
+  response_text = "OK, what movie would you like to know about?"
+  
+  Alexa::Response.build(response_text: response_text, start_over: true)
+end
 
 def respond_with_movie_plot_synopsis(alexa_request)
   movie = Movie.find(alexa_request.slot_value("Movie"))
