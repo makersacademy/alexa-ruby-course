@@ -3,7 +3,7 @@ require 'forwardable'
 
 class Movie
   extend Forwardable
-  def_delegators :@imdb_record, :title, :plot_synopsis
+  def_delegators :@imdb_record, :title
 
   def initialize(imdb_record)
     @imdb_record = imdb_record
@@ -14,11 +14,15 @@ class Movie
     new(movie_list.first)
   end
 
+  def plot_synopsis
+    @imdb_record.plot_synopsis.slice(0, 140)
+  end
+
   def cast_members
-    "#{ title } starred #{ @imdb_record.cast_members.join(", ") }"
+    "#{ title } starred #{ @imdb_record.cast_members.join(", ") }".slice(0, 140)
   end
 
   def directors
-    "#{ title } was directed by #{ @imdb_record.director.join }"
+    "#{ title } was directed by #{ @imdb_record.director.join }".slice(0, 140)
   end
 end
