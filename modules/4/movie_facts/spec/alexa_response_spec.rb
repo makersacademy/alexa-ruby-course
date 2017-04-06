@@ -19,6 +19,13 @@ RSpec.describe Alexa::Response do
       expect(custom_response).to eq expected_response
     end
 
+    it 'limits the outputSpeech to 140 characters' do
+      over_length_string = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque interdum rutrum sodales. Nullam mattis fermentum libero, noon volutpat."
+      expect(over_length_string).to receive(:slice).with(0, 140)
+      
+      described_class.build(response_text: over_length_string)
+    end
+
     it 'returns a JSON response with session data if provided' do
       expected_response = { 
         version: "1.0",

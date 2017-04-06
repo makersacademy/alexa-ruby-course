@@ -32,7 +32,7 @@ module Alexa
       self[:response] = Hash.new
       self[:response][:outputSpeech] = Hash.new
       self[:response][:outputSpeech][:type] = "PlainText"
-      self[:response][:outputSpeech][:text] = @response_text
+      self[:response][:outputSpeech][:text] = @response_text.slice(0, 140)
       self[:response][:shouldEndSession] = @end_session if @end_session
     end
   end
