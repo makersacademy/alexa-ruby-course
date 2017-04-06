@@ -15,14 +15,14 @@ class Movie
   end
 
   def plot_synopsis
-    @imdb_record.plot_synopsis.slice(0, 140)
+    @imdb_record.plot_synopsis
   end
 
   def cast_members
-    "#{ title } starred #{ @imdb_record.cast_members.join(", ") }".slice(0, 140)
+    "#{ title } starred #{ @imdb_record.cast_members.join(", ") }"
   end
 
   def directors
-    "#{ title } was directed by #{ @imdb_record.director.join }".slice(0, 140)
+    "#{ title } was directed by #{ @imdb_record.director.join }"
   end
 end
