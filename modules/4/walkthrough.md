@@ -1567,6 +1567,8 @@ def respond_with_movie_details(alexa_request)
 end
 ```
 
+:construction: This last section is under construction. Please give your thoughts on the current Handler approach in lib/alexa and in the intents directory. :construction:
+
 ## Wrapping up
 
 In this module, we've covered a variety of techniques to extract a framework for interacting with Amazon Alexa using Ruby. This framework is available [here](http://github.com/sjmog/ralyxa) to play with and extend, if you wish.
