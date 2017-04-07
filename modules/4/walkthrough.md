@@ -201,7 +201,7 @@ module Alexa
       self[:response][:outputSpeech][:text] = "Hello World"
     end
 
-    def build
+    def self.build
       # in the builder, we convert the response from the initializer to JSON
       new.to_json
     end
@@ -320,7 +320,7 @@ module Alexa
       self[:response][:outputSpeech][:text] = response_text
     end
 
-    def build(response_text)
+    def self.build(response_text)
       new(response_text).to_json
     end
   end
@@ -332,7 +332,7 @@ Our second test passes! However, our initial test fails. It fails because we can
 ```ruby
 # in lib/alexa/response.rb, with some omissions for brevity
 
-def build(response_text = "Hello World")
+def self.build(response_text = "Hello World")
   new(response_text).to_json
 end
 ```
@@ -579,23 +579,21 @@ require 'imdb'
 
 post '/' do 
   parsed_request = JSON.parse(request.body.read)
-  session = parsed_request["session"]
-  this_is_the_first_request = session["new"]
 
-  if parsed_request["request"]["intent"]["name"] == "ClearSession"
+  if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
     return {
       version: "1.0",
       response: {
+        sessionAttributes: {},
         outputSpeech: {
           type: "PlainText",
           text: "OK, what movie would you like to know about?"
-        },
-        shouldEndSession: true
+        }
       }
     }.to_json
   end
 
-  if this_is_the_first_request
+  if parsed_request["request"]["intent"]["name"] == "MovieFacts"
     requested_movie = parsed_request["request"]["intent"]["slots"]["Movie"]["value"]
     movie_list = Imdb::Search.new(requested_movie).movies
     movie = movie_list.first
@@ -608,38 +606,40 @@ post '/' do
       response: {
         outputSpeech: {
             type: "PlainText",
-            text: movie.plot_synopsis
+            text: "#{movie.plot_synopsis.slice(0, 140)}. You can ask who directed that, or who starred in it."
           }
       }
     }.to_json
   end
 
-  movie_title = session["attributes"]["movieTitle"]
-  movie_list = Imdb::Search.new(movie_title).movies
-  movie = movie_list.first
+  if parsed_request["request"]["intent"]["name"] == "FollowUp"
+    movie_title = parsed_request["session"]["attributes"]["movieTitle"]
+    movie_list = Imdb::Search.new(movie_title).movies
+    movie = movie_list.first
 
-  role = parsed_request["request"]["intent"]["slots"]["Role"]["value"]
+    role = parsed_request["request"]["intent"]["slots"]["Role"]["value"]
 
-  if role == "directed"
-    response_text = "#{movie_title} was directed by #{movie.director.join}"
-  end
+    if role == "directed"
+      response_text = "#{movie_title} was directed by #{movie.director.join}"
+    end
 
-  if role == "starred in"
-    response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
-  end
+    if role == "starred in"
+      response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
+    end
 
-  return {
-    version: "1.0",
-    sessionAttributes: {
-      movieTitle: movie_title
-    },
-    response: {
-      outputSpeech: {
-        type: "PlainText",
-        text: response_text
+    return {
+      version: "1.0",
+      sessionAttributes: {
+        movieTitle: movie_title
+      },
+      response: {
+        outputSpeech: {
+          type: "PlainText",
+          text: "#{response_text.slice(0, 140)}. Ask who starred in it, or start over."
+        }
       }
-    }
-  }.to_json
+    }.to_json
+  end
 end
 ```
 
@@ -657,11 +657,35 @@ Once again, let's copy-paste the contents of our `/lib` and `/spec` directories 
 
 Much of our Movie Facts application is concerned with handling the Session. In particular, we have three clear rules:
 
-- If the user asks to clear the session, start a new session.
-- If the user is speaking for the first time, respond with the plot synopsis for the movie they ask for.
-- If the user is not speaking for the first time, read which movie they were talking about from the session and respond with more information about that movie.
+- If the user asks to 'start over', clear the Session Attributes.
+- If the user asks about a movie, respond with the plot synopsis for that movie, and write that movie to the session.
+- If the user asks a follow-up question, read which movie they were talking about from the session and respond with more information about that movie.
 
-All of these rules involve reading to or writing from the Session. A quick win for us will be to extract Session Attributes into our Response, so we can set them easily. Our ideal interface for the last 11 lines of JSON in the POST request would be as follows:
+All of these rules involve reading to or writing from the Session. A quick win for us will be to extract _the setting of Session Attributes_ into our Response, so we can set them easily. We can target all three rules in our code with this extraction.
+
+Our ideal interface for the response to the `AMAZON.StartOverIntent` could be as follows:
+
+```ruby
+if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
+  Amazon::Response.build(movie.plot_synopsis, {})
+end
+```
+
+Our ideal interfact for the response to the `MovieFacts` Intent would be as follows:
+
+```ruby
+# inside server.rb, with some omissions for brevity
+
+if parsed_request["request"]["intent"]["name"] == "MovieFacts"
+  requested_movie = parsed_request["request"]["intent"]["slots"]["Movie"]["value"]
+  movie_list = Imdb::Search.new(requested_movie).movies
+  movie = movie_list.first
+
+  Alexa::Response.build(movie.plot_synopsis, { movieTitle: movie.title })
+end
+```
+
+Also, our ideal interface for the last 11 lines of JSON in the POST request (handling the `FollowUp` Intent) would be as follows:
 
 ```ruby
 # inside server.rb, with some omissions for brevity
@@ -708,7 +732,7 @@ module Alexa
       ...
     end
 
-    def build(response_text = "Hello World", session_attributes = {})
+    def self.build(response_text = "Hello World", session_attributes = {})
       new(response_text, session_attributes).to_json
     end
   end
@@ -740,105 +764,73 @@ require 'imdb'
 
 post '/' do 
   parsed_request = JSON.parse(request.body.read)
-  session = parsed_request["session"]
-  this_is_the_first_request = session["new"]
 
-  if parsed_request["request"]["intent"]["name"] == "ClearSession"
-    # We'll tackle this response next
-    return {
-      version: "1.0",
-      response: {
-        outputSpeech: {
-          type: "PlainText",
-          text: "OK, what movie would you like to know about?"
-        },
-        shouldEndSession: true
-      }
-    }.to_json
+  if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
+    return Alexa::Response.build("OK, what movie would you like to know about?", {})
   end
 
-  if this_is_the_first_request
+  if parsed_request["request"]["intent"]["name"] == "MovieFacts"
     requested_movie = parsed_request["request"]["intent"]["slots"]["Movie"]["value"]
     movie_list = Imdb::Search.new(requested_movie).movies
     movie = movie_list.first
 
-    return Alexa::Response.build(movie.plot_synopsis, { movieTitle: requested_movie })
+    return Alexa::Response.build(movie.plot_synopsis, { movieTitle: movie.title })
   end
 
-  movie_title = session["attributes"]["movieTitle"]
-  movie_list = Imdb::Search.new(movie_title).movies
-  movie = movie_list.first
+  if parsed_request["request"]["intent"]["name"] == "FollowUp"
+    movie_title = parsed_request["session"]["attributes"]["movieTitle"]
+    movie_list = Imdb::Search.new(movie_title).movies
+    movie = movie_list.first
 
-  role = parsed_request["request"]["intent"]["slots"]["Role"]["value"]
+    role = parsed_request["request"]["intent"]["slots"]["Role"]["value"]
 
-  if role == "directed"
-    response_text = "#{movie_title} was directed by #{movie.director.join}"
-  end
+    if role == "directed"
+      response_text = "#{movie_title} was directed by #{movie.director.join}"
+    end
 
-  if role == "starred in"
-    response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
-  end
+    if role == "starred in"
+      response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
+    end
 
   Alexa::Response.build(response_text, { movieTitle: movie_title })
 end
 ```
 
-Our next target is clearly the Alexa Response inside the `ClearSession` handler.
+This feels much more readable! Remember, though, that users should also be able to _end_ the Session at certain points. Let's make sure they can do that now.
 
 ### Extending the Response to End the Session
 
-We haven't yet extended our `Alexa::Response` object with the capacity to end a Session. As a result, we cannot extract this from `server.rb`:
+We haven't yet extended our `Alexa::Response` object with the capacity to end a Session. Similarly to how we implemented `Alexa::Response`'s ability to manage Session Attributes, let's imagine how this design could work:
 
 ```ruby
-# inside server.rb, with some omissions for brevity
+# inside an imaginary future server.rb
 
-if parsed_request["request"]["intent"]["name"] == "ClearSession"
-  # We'll tackle this response next
-  return {
-    version: "1.0",
-    response: {
-      outputSpeech: {
-        type: "PlainText",
-        text: "OK, what movie would you like to know about?"
-      },
-      # Here's the offending line
-      shouldEndSession: true
-    }
-  }.to_json
-end
-```
-
-Similarly to how we implemented `Alexa::Response`'s ability to manage Session Attributes, let's imagine how this design could work:
-
-```ruby
-# inside server.rb, with some omissions for brevity
-
-if parsed_request["request"]["intent"]["name"] == "ClearSession"
-  return Alexa::Response.build("OK, what movie would you like to know about?", {}, true)
+if parsed_request["request"]["intent"]["name"] == "RestartSession"
+  return Alexa::Response.build("Goodbye", {}, true)
 end
 ```
 
 > This design is starting to feel a little unreadable: it's not immediately clear what an empty hash and boolean 'true' have to do with an `Alexa::Response`. We'll come to that during the refactor step.
 
-Here is a test for the new `end_session` boolean parameter:
+Here is a test for the new `start_over` boolean parameter:
 
 ```ruby
 # inside spec/alexa_response_spec.rb
 
-it 'returns a JSON response with an endSessionRequest if provided' do
+it 'returns a JSON response that "starts over" by clearing the Session Attributes if provided' do
   expected_response = {
     version: "1.0",
+    sessionAttributes: {},
     response: {
       outputSpeech: {
         type: "PlainText",
         text: "Hello World"
-      },
-      shouldEndSession: true
+      }
     }
   }.to_json
 
-  end_session_response = Alexa::Response.build("Hello World", {}, true)
-  expect(end_session_response).to eq expected_response
+  start_over_response = described_class.build(start_over: true)
+  expect(start_over_response).to eq expected_response
 end
 ```
 
@@ -849,7 +841,7 @@ To pass this test, we can easily insert another procedure into our hash construc
 
 module Alexa
   class Response
-    def initialize(response_text, session_attributes, end_session)
+    def initialize(response_text, session_attributes, start_over)
       ...
       response[:response][:shouldEndSession] = end_session if end_session
     end
@@ -857,17 +849,27 @@ module Alexa
 end
 ```
 
-Our test passes! Let's try it out in `server.rb` using the Service Simulator, and then let's refactor.
+Our test passes! However, this long list of parameters to `Alexa::Response`s is becoming hard to understand. Let's refactor.
 
 ### Refactoring for readability
 
-We've improved the design of our session-clearing response somewhat:
+We've improved the design of our session-start-over response somewhat:
 
 ```ruby
 # inside server.rb, with some omissions for brevity
 
-if parsed_request["request"]["intent"]["name"] == "ClearSession"
-  return Alexa::Response.build("OK, what movie would you like to know about?", {}, true)
+if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
+  return Alexa::Response.build("OK, what movie would you like to know about?", {})
+end
+```
+
+And we've improved the design of ending sessions:
+
+```ruby
+# inside an imaginary future server.rb
+
+if parsed_request["request"]["intent"]["name"] == "RestartSession"
+  return Alexa::Response.build("Goodbye", {}, true)
 end
 ```
 
@@ -876,9 +878,22 @@ While this is clearly an improvement to the current mess of JSON construction, w
 ```ruby
 # inside server.rb, with some omissions for brevity
 
-if parsed_request["request"]["intent"]["name"] == "ClearSession"
-  respose_text = "OK, what movie would you like to know about?"
-  return Alexa::Response.build(response_text: response_text, end_session: true)
+if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
+  response_text = "OK, what movie would you like to know about?"
+  return Alexa::Response.build(response_text: response_text, start_over: true)
+end
+
+if parsed_request["request"]["intent"]["name"] == "MovieFacts"
+  ... retrieve the movie record ...
+  return Alexa::Response.build(response_text: movie.title, session_attributes: { movieTitle: movie.title })
+end
+```
+
+And, in our imaginary future scenario where we'd want to end the session:
+
+```ruby
+if parsed_request["request"]["intent"]["name"] == "EndSession"
+  return Alexa::Response.build(response_text: "Goodbye", end_session: true)
 end
 ```
 
@@ -925,6 +940,22 @@ RSpec.describe Alexa::Response do
       expect(session_response).to eq expected_response
     end
 
+    it 'returns a JSON response that "starts over" by clearing the Session Attributes if provided' do
+      expected_response = {
+        version: "1.0",
+        sessionAttributes: {},
+        response: {
+          outputSpeech: {
+            type: "PlainText",
+            text: "Hello World"
+          }
+        }
+      }.to_json
+
+      start_over_response = described_class.build(start_over: true)
+      expect(start_over_response).to eq expected_response
+    end
+
     it 'returns a JSON response with an endSessionRequest if provided' do
       expected_response = {
         version: "1.0",
@@ -966,18 +997,19 @@ require 'json'
 
 module Alexa
   class Response < Hash
-    def initialize(response_text, session_attributes, end_session)
-      @response_text = response_text
+    def initialize(response_text, session_attributes, end_session, start_over)
+      @response_text      = response_text
       @session_attributes = session_attributes
-      @end_session = end_session
+      @end_session        = end_session
+      @start_over         = start_over
 
       set_version
       set_session_attributes
       set_response
     end
 
-    def self.build(response_text: "Hello World", session_attributes: {}, end_session: false)
-      new(response_text, session_attributes, end_session).to_json
+    def self.build(response_text: "Hello World", session_attributes: {}, end_session: false, start_over: false)
+      new(response_text, session_attributes, end_session, start_over).to_json
     end
 
     private
@@ -987,6 +1019,7 @@ module Alexa
     end
 
     def set_session_attributes
+      return self[:sessionAttributes] = {} if @start_over
       self[:sessionAttributes] = @session_attributes unless @session_attributes.empty?
     end
 
@@ -1011,15 +1044,13 @@ require 'imdb'
 
 post '/' do 
   parsed_request = JSON.parse(request.body.read)
-  session = parsed_request["session"]
-  this_is_the_first_request = session["new"]
 
-  if parsed_request["request"]["intent"]["name"] == "ClearSession"
+  if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
     response_text = "OK, what movie would you like to know about?"
-    Alexa::Response.build(response_text: response_text, end_session: true)
+    return Alexa::Response.build(response_text: response_text, start_over: true)
   end
 
-  if this_is_the_first_request
+  if parsed_request["request"]["intent"]["name"] == "MovieFacts"
     requested_movie = parsed_request["request"]["intent"]["slots"]["Movie"]["value"]
     movie_list = Imdb::Search.new(requested_movie).movies
     movie = movie_list.first
@@ -1051,85 +1082,13 @@ Now, let's try upgrading our `Alexa::Request` to refactor a bunch of the other c
 
 ### Extending the Alexa Request to read from the Session
 
-We cannot immediately wrap the Sinatra request inside our `Alexa::Request`, because our controller code needs to be able to access the session. There are two main candidates for extensions to `Alexa::Request`, and we need to upgrade them both before we can replace code in `server.rb` with our Alexa Request object:
-
-1. Is this a new session?
-2. What is the value of a session attribute?
+We cannot immediately wrap the Sinatra request inside our `Alexa::Request`, because our controller code needs to be able to access the session. We must extend our `Alexa::Request` to read the value of a session attribute:
 
 We also need to add the ability to **read the IntentName** from an `Alexa::Request`. We'll do each of these refactors in turn.
 
-> Another way to think of these three extensions is: we need to eliminate references to `parsed_request` in `server.rb`.
+> Another way to think of these extensions is: we need to eliminate references to `parsed_request` in `server.rb`.
 
-#### Extension 1: is this a new session?
-
-Here are the offending lines waiting to be extracted to the `Alexa::Request` object:
-
-```ruby
-# in server.rb, with omissions for brevity
-
-parsed_request = JSON.parse(request.body.read)
-session = parsed_request["session"]
-this_is_the_first_request = session["new"]
-```
-
-A much more pleasant design would be:
-
-```ruby
-# in server.rb, with omissions for brevity
-
-alexa_request = Alexa::Request.new(request)
-this_is_the_first_request = alexa_request.new_session?
-```
-
-Let's write a test for a `#new_session?` method on an `Alexa::Request` instance:
-
-```ruby
-# inside spec/alexa_request_spec.rb
-
-describe '#new_session?' do
-  it 'is true if this is a new session' do
-    # Let's use a relevant part of the JSON visible
-    # when a request is sent via the Service Simulator
-    request_json = {
-      "session": {
-        "sessionId": "id_string",
-        "new": true
-      }
-    }.to_json
-
-    sinatra_request = double("Sinatra::Request", body: StringIO.new(request_json))
-
-    expect(Alexa::Request.new(stubbed_request).new_session?).to be true
-  end
-
-  it 'is false otherwise' do
-    # Again, let's only use relevant JSON
-    request_json = {
-      "session": {
-        "sessionId": "id_string",
-        "new": true
-      }
-    }.to_json
-
-    expect(described_class.new(stubbed_request).new_session?).to be false
-  end
-end
-```
-
-Passing this test is fairly simple:
-
-```ruby
-# inside lib/alexa/request.rb, with some omissions for brevity
-module Alexa
-  class Request
-    def new_session?
-      @request["session"]["new"]
-    end
-  end
-end
-```
-
-#### Extension 2: What is the value of a session attribute?
+#### Extension 1: What is the value of a session attribute?
 
 Here are the offending lines which could benefit from some refactoring:
 
@@ -1137,9 +1096,8 @@ Here are the offending lines which could benefit from some refactoring:
 # inside server.rb, with some omissions for brevity
 
 parsed_request = JSON.parse(request.body.read)
-session = parsed_request["session"]
 ...
-movie_title = session["attributes"]["movieTitle"]
+movie_title = parsed_request["session"]["attributes"]["movieTitle"]
 ```
 
 A much more pleasant design would be:
@@ -1187,7 +1145,7 @@ def session_attribute(attribute_name)
 end
 ```
 
-#### Extension 3: reading the `IntentName` from an `Alexa::Request`
+#### Extension 2: reading the `IntentName` from an `Alexa::Request`
 
 Here are the offending lines which could benefit from some refactoring:
 
@@ -1196,7 +1154,12 @@ Here are the offending lines which could benefit from some refactoring:
 
 parsed_request = JSON.parse(request.body.read)
 ...
-if parsed_request["request"]["intent"]["name"] == "ClearSession"
+if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
+...
+if parsed_request["request"]["intent"]["name"] == "MovieFacts"
+...
+if parsed_request["request"]["intent"]["name"] == "FollowUp"
+...
 ```
 
 A much more pleasant design would be:
@@ -1206,7 +1169,12 @@ A much more pleasant design would be:
 
 alexa_request = Alexa::Request.new(request)
 ...
-if alexa_request.intent_name == "ClearSession"
+if alexa_request.intent_name == "AMAZON.StartOverIntent"
+...
+if alexa_request.intent_name == "MovieFacts"
+...
+if alexa_request.intent_name == "FollowUp"
+...
 ```
 
 Let's write a test for an `#intent_name` method that reads the Intent Name on an `Alexa::Request` instance:
@@ -1246,7 +1214,7 @@ With that, we are ready to replace a large chunk of `server.rb`, optimising for 
 
 ### Refactoring `server.rb` with our new `Alexa::Request`
 
-Let's replace some of the clunkie `server.rb` code with our new `Alexa::Request` objects:
+Let's replace some of the clunky `server.rb` code with our new `Alexa::Request` objects:
 
 ```ruby
 # in server.rb
@@ -1256,12 +1224,12 @@ require 'imdb'
 post '/' do 
   alexa_request = Alexa::Request.new(request)
 
-  if alexa_request.intent_name == "ClearSession"
+  if alexa_request.intent_name == "AMAZON.StartOverIntent"
     response_text = "OK, what movie would you like to know about?"
-    Alexa::Response.build(response_text: response_text, end_session: true)
+    Alexa::Response.build(response_text: response_text, start_over: true)
   end
 
-  if alexa_request.new_session?
+  if alexa_request.intent_name == "MovieFacts"
     requested_movie = alexa_request.slot_value("Movie")
     movie_list = Imdb::Search.new(requested_movie).movies
     movie = movie_list.first
@@ -1271,25 +1239,27 @@ post '/' do
     return Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: requested_movie })
   end
 
-  movie_title = alexa_request.session_attribute("movieTitle")
-  movie_list = Imdb::Search.new(movie_title).movies
-  movie = movie_list.first
+  if alexa_request.intent_name == "FollowUp"
+    movie_title = alexa_request.session_attribute("movieTitle")
+    movie_list = Imdb::Search.new(movie_title).movies
+    movie = movie_list.first
 
-  if alexa_request.session_attribute("Role") == "directed"
-    response_text = "#{movie_title} was directed by #{movie.director.join}"
+    if alexa_request.session_attribute("Role") == "directed"
+      response_text = "#{movie_title} was directed by #{movie.director.join}"
+    end
+
+    if alexa_request.session_attribute("Role") == "starred in"
+      response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
+    end
+
+    return Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: movie_title })
   end
-
-  if alexa_request.session_attribute("Role") == "starred in"
-    response_text = "#{movie_title} starred #{movie.cast_members.join(", ")}"
-  end
-
-  Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: movie_title })
 end
 ```
 
-That's much neater! Our framework is complete for now, ready for extending in modules 5 and 6.
+That's much neater! However, we can see a kind of 'routing' idea emerging. That is: our application rules are principally determined by the kind of Intent requested, which each evoke a specific set of logic. What can we do about that? First, let's extract a `Movie` object so we can see more clearly.
 
-### OPTIONAL: Tidying up with a `Movie` model
+### Tidying up with a `Movie` model
 
 Our `server.rb` is looking much tidier, but it's still quite unpleasant. Just as in our Number Facts application, we have quite a lot of logic concerning 'movies', but no central representation of the domain concept of a `Movie`.
 
@@ -1304,18 +1274,26 @@ require 'imdb'
 post '/' do 
   alexa_request = Alexa::Request.new(request)
 
-  if alexa_request.intent_name == "ClearSession"
-    response_text = "OK, what movie would you like to know about?"
-    Alexa::Response.build(response_text: response_text, end_session: true)
+  if alexa_request.intent_name == "AMAZON.StartOverIntent"
+    # We can use Extract Method here
+    return respond_with_start_over
   end
 
-  if alexa_request.new_session?
-    # We can use Extract Method here
+  if alexa_request.intent_name == "MovieFacts"
+    # And here
     return respond_with_movie_plot_synopsis(alexa_request)
   end
 
-  # And here
-  respond_with_movie_details(alexa_request)
+  if alexa_request.intent_name == "FollowUp"
+    # And here
+    respond_with_movie_details(alexa_request)
+  end
+end
+
+def respond_with_start_over
+  response_text = "OK, what movie would you like to know about?"
+  
+  Alexa::Response.build(response_text: response_text, start_over: true)
 end
 
 def respond_with_movie_plot_synopsis(alexa_request)
@@ -1347,9 +1325,9 @@ end
 
 This is a pretty good start: already our `POST /` route is looking like a pretty simple representation of our rules from earlier:
 
-- If the user asks to clear the session, start a new session.
-- If the user is speaking for the first time, respond with the plot synopsis for the movie they ask for.
-- If the user is not speaking for the first time, read which movie they were talking about from the session and respond with more information about that movie.
+- If the user asks to 'start over', clear the Session Attributes.
+- If the user asks about a movie, respond with the plot synopsis for that movie, and write that movie to the session.
+- If the user asks a follow-up question, read which movie they were talking about from the session and respond with more information about that movie.
 
 Let's kick off a `Movie` object with the biggest win: pulling that messy `Imdb::Search` code into an object. Here's how it could work:
 
@@ -1405,14 +1383,26 @@ require 'imdb'
 post '/' do 
   alexa_request = Alexa::Request.new(request)
 
-  if alexa_request.intent_name == "ClearSession"
-    response_text = "OK, what movie would you like to know about?"
-    Alexa::Response.build(response_text: response_text, end_session: true)
+  if alexa_request.intent_name == "AMAZON.StartOverIntent"
+    # We can use Extract Method here
+    return respond_with_start_over
   end
 
-  return respond_with_movie_plot_synopsis(alexa_request) if alexa_request.new_session?
+  if alexa_request.intent_name == "MovieFacts"
+    # And here
+    return respond_with_movie_plot_synopsis(alexa_request)
+  end
 
-  respond_with_movie_details(alexa_request)
+  if alexa_request.intent_name == "FollowUp"
+    # And here
+    respond_with_movie_details(alexa_request)
+  end
+end
+
+def respond_with_start_over
+  response_text = "OK, what movie would you like to know about?"
+  
+  Alexa::Response.build(response_text: response_text, start_over: true)
 end
 
 def respond_with_movie_plot_synopsis(alexa_request)
@@ -1491,31 +1481,22 @@ class Movie
 end
 ```
 
-This allows us to achieve the following in the controller:
+This allows us to achieve the following inside our methods:
 
 ```ruby
 # inside server.rb
-require 'sinatra'
-require './lib/alexa/request'
-require './lib/alexa/response'
-require './lib/movie'
 
-### CONTROLLER CODE ###
-
-post '/' do 
-  alexa_request = Alexa::Request.new(request)
-
-  if alexa_request.intent_name == "ClearSession"
-    response_text = "OK, what movie would you like to know about?"
-    return Alexa::Response.build(response_text: response_text, end_session: true)
-  end
-
-  return respond_with_movie_plot_synopsis(alexa_request) if alexa_request.new_session?
-
-  respond_with_movie_details(alexa_request)
+post '/' do
+  ... controller code ...
 end
 
 ### CONTROLLER CONVENIENCE METHODS ###
+
+def respond_with_start_over
+  response_text = "OK, what movie would you like to know about?"
+  
+  Alexa::Response.build(response_text: response_text, start_over: true)
+end
 
 def respond_with_movie_plot_synopsis(alexa_request)
   movie = Movie.find(alexa_request.slot_value("Movie"))
@@ -1533,6 +1514,58 @@ end
 ```
 
 Much nicer!
+
+### Extracting Handlers
+
+Our `POST` route is looking an awful lot like a 'routing' system, that routes to certain 'convenience methods' depending on the Intent received. Each of these 'convenience methods' could be expressed as being a 'Handler'. We should be able to represent them in our framework.
+
+Let's start by clearly delineating the 'routing' code and the 'handling' code:
+
+```ruby
+require 'sinatra'
+require './lib/alexa/request'
+require './lib/alexa/response'
+require './lib/movie'
+
+### 'ROUTING' CODE ###
+
+post '/' do 
+  alexa_request = Alexa::Request.new(request)
+
+  case alexa_request.intent_name
+  when "AMAZON.StartOverIntent"
+    respond_with_start_over
+  when "MovieFacts"
+    respond_with_movie_plot_synopsis(alexa_request)
+  when "FollowUp"
+    respond_with_movie_details(alexa_request)
+  end
+end
+
+### 'HANDLING' CODE ###
+
+def respond_with_start_over
+  response_text = "OK, what movie would you like to know about?"
+  
+  Alexa::Response.build(response_text: response_text, start_over: true)
+end
+
+def respond_with_movie_plot_synopsis(alexa_request)
+  movie = Movie.find(alexa_request.slot_value("Movie"))
+  response_text = movie.plot_synopsis
+
+  Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: movie.title })
+end
+
+def respond_with_movie_details(alexa_request)
+  movie = Movie.find(alexa_request.session_attribute("movieTitle"))
+
+  response_text = movie.directors if alexa_request.slot_value("Role") == "directed"
+  response_text = movie.cast_members if alexa_request.slot_value("Role") == "starred in"
+
+  Alexa::Response.build(response_text: response_text, session_attributes: { movieTitle: movie.title })
+end
+```
 
 ## Wrapping up
 
