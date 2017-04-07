@@ -23,8 +23,6 @@ module Alexa
       end
     end
 
-    private
-
     attr_reader :request
 
     def registered_intent(intent_name)
@@ -34,5 +32,13 @@ module Alexa
     def respond(response_details)
       Alexa::Response.build(response_details)
     end
+
+    def tell(response_details)
+      respond(response_details.merge(end_session: true))
+    end
+
+    alias ask respond
+
+    private :request, :registered_intent, :respond, :tell
   end
 end
