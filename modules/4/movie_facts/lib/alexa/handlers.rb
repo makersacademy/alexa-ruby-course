@@ -5,13 +5,12 @@ module Alexa
   class Handlers
     @@intents = {}
 
-    def initialize(request, response)
-      @request  = request
-      @response = response
+    def initialize(request)
+      @request = request
     end
 
     def handle
-      instance_eval &@@intents[request.intent_name]
+      instance_eval &registered_intent(request.intent_name)
     end
 
     class << self
@@ -20,12 +19,20 @@ module Alexa
       end
 
       def handle(request)
-        new(Alexa::Request.new(request), Alexa::Response).handle
+        new(Alexa::Request.new(request)).handle
       end
     end
 
     private
 
-    attr_reader :request, :response
+    attr_reader :request
+
+    def registered_intent(intent_name)
+      @@intents[intent_name]
+    end
+
+    def respond(response_details)
+      Alexa::Response.build(response_details)
+    end
   end
 end

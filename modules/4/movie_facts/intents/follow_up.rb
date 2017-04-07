@@ -6,5 +6,5 @@ intent "FollowUp" do
   response_text = movie.directors if request.slot_value("Role") == "directed"
   response_text = movie.cast_members if request.slot_value("Role") == "starred in"
 
-  response.build(response_text: response_text, session_attributes: { movieTitle: movie.title })
+  respond(response_text: response_text, session_attributes: { movieTitle: movie.title })
 end
