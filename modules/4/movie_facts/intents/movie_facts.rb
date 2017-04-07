@@ -1,8 +1,7 @@
 require './lib/movie'
 
-intent("MovieFacts") do
+intent "MovieFacts" do
   movie = Movie.find(request.slot_value("Movie"))
-  response_text = movie.plot_synopsis
-
-  response.build(response_text: response_text, session_attributes: { movieTitle: movie.title })
+  
+  response.build(response_text: movie.plot_synopsis, session_attributes: { movieTitle: movie.title })
 end

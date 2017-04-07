@@ -1,6 +1,6 @@
 require './lib/movie'
 
-intent("FollowUp") do
+intent "FollowUp" do
   movie = Movie.find(request.session_attribute("movieTitle"))
 
   response_text = movie.directors if request.slot_value("Role") == "directed"
