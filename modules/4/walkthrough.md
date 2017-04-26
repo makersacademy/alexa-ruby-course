@@ -70,7 +70,13 @@ RSpec.describe Alexa::Response do
 end
 ```
 
-We can run our RSpec tests via the command-line, using `rspec`. We get an error, because the `require` statement at the top of our test cannot find a file at the following path: `lib/alexa/response.rb` (RSpec will automatically try to load `require`d files from the `/lib` directory).
+We can run our RSpec tests via the command-line, using `rspec`:
+
+```sh
+rspec spec/alexa_response_spec.rb
+```
+
+We get an error, because the `require` statement at the top of our test cannot find a file at the following path: `lib/alexa/response.rb` (RSpec will automatically try to load `require`d files from the `/lib` directory).
 
 We can solve this problem by creating a file with that name, in that location, and defining our class:
 
@@ -93,6 +99,7 @@ Now, let's try to build a method that reflects the interface we're planning to i
 ```ruby
 # inside server.rb
 require 'sinatra'
+require './lib/alexa/response'
 
 post '/' do
   Alexa::Response.build
@@ -102,7 +109,8 @@ end
 Our next test therefore needs to test this proposed interface. Let's write a test that expects the JSON (the 'Minimal Response') we currently have in `server.rb`. We want this to be returned whenever we call `Alexa::Response.build`:
 
 ```ruby
-# inside alexa_response_spec.rb
+# inside spec/alexa_response_spec.rb
+require 'alexa/response'
 
 RSpec.describe Alexa::Response do
   describe '.build' do
@@ -168,7 +176,7 @@ module Alexa
 end
 ```
 
-Our test now passes. We can replace the JSON in `server.rb` with our new design, and test the 'Hello World' application in the Service Simulator: it works!
+Our test now passes. We can replace the minimal response JSON in `server.rb` with our new design, and test the 'Hello World' application in the Service Simulator: it works!
 
 ### Refactoring
 
@@ -271,7 +279,7 @@ end
 First, let's write a test for the kind of JSON response we expect to receive from this interface:
 
 ```ruby
-# in spec/alexa/response.rb
+# in spec/alexa_response_spec.rb
 require 'alexa/response'
 
 RSpec.describe Alexa::Response do
@@ -346,6 +354,7 @@ Let's use our new, upgraded `Alexa::Response` object in Numbers Facts' `server.r
 require 'sinatra'
 require 'json'
 require 'net/http'
+require './lib/alexa/response'
 
 post '/' do 
   parsed_request = JSON.parse(request.body.read)
@@ -361,7 +370,7 @@ end
 
 Testing in the Service Simulator, we can see that our refactor has been successful: functionality has not been affected by our tidying of the code.
 
-### Getting cleaners access to Slots using a Request object
+### Getting cleaner access to Slots using a Request object
 
 The first three lines of Number Facts' `server.rb` POST route are unpleasant to read. They:
 
@@ -496,7 +505,7 @@ Clearly, this method is suited for us to use the [Extract Class](https://sourcem
 # inside spec/number_fact_spec.rb
 require 'number_fact'
 
-RSpec.described NumberFact do
+RSpec.describe NumberFact do
   describe '#text' do
     it 'returns a fact for a given number and fact type as plain text' do
       number_fact_text = "3 is the number of spatial dimensions we perceive our universe to have."
@@ -513,6 +522,7 @@ We can pull the code we extracted using Extract Method into a `NumberFact` class
 
 ```ruby
 # in lib/number_fact.rb
+require 'net/http'
 
 class NumberFact
   attr_reader :text
@@ -568,7 +578,7 @@ We're done with Number Facts: let's move on to our 'Movie Facts' skill.
 
 ## Refactoring Movie Facts: extracting the Session
 
-In our third module, Movie Facts, we would up with a reasonably simple Sinatra application. Like Number Facts, Movie Facts handled JSON responses with variable data using Slots, and querying an external API. In addition, Movie Facts used the Session and Session Attributes to engage users in a multi-stage process for making queries about movies. In this section, we'll extend our Request and Response objects to handle reading from and writing to the Session.
+In our third module, Movie Facts, we wound up with a reasonably simple Sinatra application. Like Number Facts, Movie Facts handled JSON responses with variable data using Slots, and querying an external API. In addition, Movie Facts used the Session and Session Attributes to engage users in a multi-stage process for making queries about movies. In this section, we'll extend our Request and Response objects to handle reading from and writing to the Session.
 
 Here's our Sinatra application at the end of module 3:
 
@@ -667,7 +677,7 @@ Our ideal interface for the response to the `AMAZON.StartOverIntent` could be as
 
 ```ruby
 if parsed_request["request"]["intent"]["name"] == "AMAZON.StartOverIntent"
-  Amazon::Response.build(movie.plot_synopsis, {})
+  Alexa::Response.build(movie.plot_synopsis, {})
 end
 ```
 
@@ -685,7 +695,7 @@ if parsed_request["request"]["intent"]["name"] == "MovieFacts"
 end
 ```
 
-Also, our ideal interface for the last 11 lines of JSON in the POST request (handling the `FollowUp` Intent) would be as follows:
+Also, our ideal interface for the last 12 lines of JSON in the POST request (handling the `FollowUp` Intent) would be as follows:
 
 ```ruby
 # inside server.rb, with some omissions for brevity
@@ -717,19 +727,23 @@ describe '.build' do
     expect(session_response).to eq expected_response
   end
 end
+
+# other tests for the minimal JSON response go here
 ```
 
 It's relatively easy for us to implement this, given that we're building our Response hash procedurally:
 
 ```ruby
-# in lib/alexa/response.rb, with some omissions for brevity
+# in lib/alexa/response.rb
 module Alexa
   class Response < Hash
     def initialize(response_text, session_attributes)
       self[:version] = "1.0"
       self[:sessionAttributes] = session_attributes
       self[:response] = Hash.new
-      ...
+      self[:response][:outputSpeech] = Hash.new
+      self[:response][:outputSpeech][:type] = "PlainText"
+      self[:response][:outputSpeech][:text] = response_text
     end
 
     def self.build(response_text = "Hello World", session_attributes = {})
@@ -761,6 +775,8 @@ Our tests pass once again! Now let's replace those lines in `server.rb` with our
 require 'sinatra'
 require 'json'
 require 'imdb'
+require './lib/alexa/request'
+require './lib/alexa/response'
 
 post '/' do 
   parsed_request = JSON.parse(request.body.read)
@@ -805,14 +821,14 @@ We haven't yet extended our `Alexa::Response` object with the capacity to end a 
 ```ruby
 # inside an imaginary future server.rb
 
-if parsed_request["request"]["intent"]["name"] == "RestartSession"
+if parsed_request["request"]["intent"]["name"] == "EndSession"
   return Alexa::Response.build("Goodbye", {}, true)
 end
 ```
 
 > This design is starting to feel a little unreadable: it's not immediately clear what an empty hash and boolean 'true' have to do with an `Alexa::Response`. We'll come to that during the refactor step.
 
-Here is a test for the new `start_over` boolean parameter:
+Here is a test for the new `end_session` boolean parameter:
 
 ```ruby
 # inside spec/alexa_response_spec.rb
@@ -825,12 +841,13 @@ it 'returns a JSON response that "starts over" by clearing the Session Attribute
       outputSpeech: {
         type: "PlainText",
         text: "Hello World"
-      }
+      },
+      shouldEndSession: true
     }
   }.to_json
 
-  start_over_response = described_class.build(start_over: true)
-  expect(start_over_response).to eq expected_response
+  end_session_response = described_class.build("Hello World", {}, true)
+  expect(end_session_response).to eq expected_response
 end
 ```
 
@@ -841,9 +858,9 @@ To pass this test, we can easily insert another procedure into our hash construc
 
 module Alexa
   class Response
-    def initialize(response_text, session_attributes, start_over)
+    def initialize(response_text, session_attributes, end_session)
       ...
-      response[:response][:shouldEndSession] = end_session if end_session
+      self[:response][:shouldEndSession] = end_session if end_session
     end
   end
 end
@@ -1567,8 +1584,262 @@ def respond_with_movie_details(alexa_request)
 end
 ```
 
-:construction: This last section is under construction. Please give your thoughts on the current Handler approach in lib/alexa and in the intents directory. :construction:
+Wouldn't it be great if we could write handlers in some directory specifically designated for the writing of handlers, and in some attractive way? Something like:
+
+```ruby
+# inside intents/respond_with_start_over.rb
+
+intent "AMAZON.StartOverIntent" do
+  response_text = "OK, what movie would you like to know about?"
+  Alexa::Response.build(response_text: response_text, start_over: true)
+end
+```
+
+Then, in our ideal world, we could pull these intent handlers into our Sinatra Application with a single line:
+
+```ruby
+# inside server.rb
+require 'sinatra'
+require './lib/alexa'
+
+post '/' do
+  Alexa::Handlers.handle(request)
+end
+```
+
+That feels much better – we're borrowing from Sinatra's elegant way of constructing routes.
+
+To get started, we'll need to build some entity that stores all the available intents in a structured way, and can execute those intents within the same context. For brevity, I've omitted tests: here is such an object:
+
+```ruby
+# inside lib/alexa/handlers
+require './lib/alexa/request'
+require './lib/alexa/response'
+
+module Alexa
+  class Handlers
+    # We'll use a class variable to store a map of IntentNames and Intents
+    @@intents = {}
+
+    def initialize(request)
+      @request = request
+    end
+
+    # Handle the incoming request. The request is expected to respond to #intent_name,
+    # i.e. we are assuming the request is an instance of Alexa::Request.
+    # we execute the intent registered to the request's IntentName within the context of
+    # this Handlers instance: that way we have access to a bunch of convenience methods
+    # to make the user's experience of writing intents more pleasant.
+    def handle
+      instance_eval &registered_intent(request.intent_name)
+    end
+
+    class << self
+      # provide developers with a friendly interface for
+      # defining custom intents, of the form 
+      # `intent "IntentName" {}`
+      # Store any intents written in this form inside the
+      # class variable @@intents, for handling later
+      def intent(intent_name, &block)
+        @@intents[intent_name] = block
+      end
+
+      # a builder method that wraps the incoming request into an
+      # Alexa::Request instance we can work with more easily
+      def handle(request)
+        new(Alexa::Request.new(request)).handle
+      end
+    end
+
+    # allow developers to work directly with
+    # requests in their intent declarations
+    attr_reader :request
+
+    def registered_intent(intent_name)
+      @@intents[intent_name]
+    end
+
+    def respond(response_details)
+      Alexa::Response.build(response_details)
+    end
+
+    private :request, :registered_intent
+  end
+end
+```
+
+We will also need some sort of object to register all intent declarations at startup. Let's assume that all intents are declared in the `/intents` directory. In other words, let's assume the application structure is as follows:
+
+```
+| app_name
+|- server.rb
+|- intents
+|-- intent_name.rb
+|-- other_intent_name.rb
+```
+
+We can pull our intent declarations into the scope of our `Alexa::Handlers` object in the following way:
+
+```ruby
+# inside lib/alexa/skill
+require_relative './alexa/handlers'
+
+module Alexa
+  class Skill
+    # find all intent declarations in the /intents directory
+    def self.register_intents
+      Dir.glob("intents/*.rb").each { |intent_declaration| register(intent_declaration) }
+    end
+
+    # for each declaration, evaluate the declaration
+    # in the context of the Alexa::Handlers class
+    def self.register(intent_declaration)
+      Alexa::Handlers.class_eval File.open(File.expand_path(intent_declaration)).read
+    end
+  end
+end
+
+# register any available intents
+Alexa::Skill.register_intents
+```
+
+We can now replace our `server.rb` content with the following:
+
+```ruby
+# inside server.rb
+
+require 'sinatra'
+require './lib/alexa/skill'
+
+post '/' do
+  Alexa::Handlers.handle(request)
+end
+```
+
+We can declare our intents inside `/intents`:
+
+```ruby
+# in the /intents directory, any file that ends in .rb
+# presented here in one file, 
+# but optionally in several (one per intent declaration)
+require 'movie'
+
+intent "AMAZON.StartOverIntent" do
+  respond(response_text: "OK, what movie would you like to know about?", start_over: true)
+end
+
+intent "MovieFacts" do
+  movie = Movie.find(request.slot_value("Movie"))
+
+  respond(response_text: movie.plot_synopsis, session_attributes: { movieTitle: movie.title })
+end
+
+intent "FollowUp" do
+  movie = Movie.find(request.session_attribute("movieTitle"))
+
+  response_text = movie.directors if request.slot_value("Role") == "directed"
+  response_text = movie.cast_members if request.slot_value("Role") == "starred in"
+  response_text += ". What else would you like to know?"
+
+  respond(response_text: response_text, session_attributes: { movieTitle: movie.title })
+end
+```
+
+When we start our application, we pull these intents into the `Alexa::Handlers` object, which then handles incoming requests and routes to the correct declaration!
+
+### Being more Pro with Ask and Tell
+
+One principle of Alexa Voice Interface Design is: there are two ways Alexa can respond to a question. The first is by _asking_. The second is by _telling_. An _ask_ asks the user a question, and expects them to reply. A _tell_ ends the conversation.
+
+We can augment the `Alexa::Handlers` object with some more convenient ways of doing _ask_s and _tell_s:
+
+```ruby
+# inside lib/alexa/handlers.rb
+require './lib/alexa/request'
+require './lib/alexa/response'
+
+module Alexa
+  class Handlers
+    @@intents = {}
+
+    def initialize(request)
+      @request = request
+    end
+
+    def handle
+      instance_eval &registered_intent(request.intent_name)
+    end
+
+    class << self
+      def intent(intent_name, &block)
+        @@intents[intent_name] = block
+      end
+
+      def handle(request)
+        new(Alexa::Request.new(request)).handle
+      end
+    end
+
+    attr_reader :request
+
+    def registered_intent(intent_name)
+      @@intents[intent_name]
+    end
+
+    # let's also streamline the interface a bit, and
+    # assume the first argument to this is always the
+    # thing that Alexa says
+    def respond(response_text, response_details = {})
+      Alexa::Response.build(response_details.merge(response_text: response_text))
+    end
+
+    # a new convenience method for doing `tell`s
+    # which end the session
+    def tell(response_text, response_details = {})
+      respond(response_text, response_details.merge(end_session: true))
+    end
+
+    # `ask`s are just the same as respond
+    alias ask respond
+
+    private :request, :registered_intent, :respond, :tell
+  end
+end
+```
+
+Now we can rewrite our intent declarations in a slightly improved fashion:
+
+```ruby
+# in the /intents directory, any file that ends in .rb
+# presented here in one file, 
+# but optionally in several (one per intent declaration)
+require 'movie'
+
+intent "AMAZON.StartOverIntent" do
+  ask("OK, what movie would you like to know about?", start_over: true)
+end
+
+intent "MovieFacts" do
+  movie = Movie.find(request.slot_value("Movie"))
+
+  ask(movie.plot_synopsis, session_attributes: { movieTitle: movie.title })
+end
+
+intent "FollowUp" do
+  movie = Movie.find(request.session_attribute("movieTitle"))
+
+  response_text = movie.directors if request.slot_value("Role") == "directed"
+  response_text = movie.cast_members if request.slot_value("Role") == "starred in"
+  response_text += ". What else would you like to know?"
+
+  ask(response_text, session_attributes: { movieTitle: movie.title })
+end
+```
+
+Much neater!
 
 ## Wrapping up
 
 In this module, we've covered a variety of techniques to extract a framework for interacting with Amazon Alexa using Ruby. This framework is available [here](http://github.com/sjmog/ralyxa) to play with and extend, if you wish.
+
+In future modules, we shall use this framework to build more advanced skills.
