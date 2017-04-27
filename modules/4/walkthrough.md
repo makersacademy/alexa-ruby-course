@@ -851,7 +851,7 @@ it 'returns a JSON response that "starts over" by clearing the Session Attribute
 end
 ```
 
-To pass this test, we can easily insert another procedure into our hash construction in `Alexa::Response`:
+To pass this test, we can easily insert another procedure into our hash construction in `Alexa::Response`, and update our `.build` method to include this third parameter:
 
 ```ruby
 # inside lib/alexa/response.rb, with some omissions for brevity
@@ -861,6 +861,10 @@ module Alexa
     def initialize(response_text, session_attributes, end_session)
       ...
       self[:response][:shouldEndSession] = end_session if end_session
+    end
+
+    def build(response_text = "Hello World", session_attributes = {}, end_session = false)
+      new(response_text, session_attributes, end_session).to_json
     end
   end
 end
