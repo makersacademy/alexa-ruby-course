@@ -833,10 +833,9 @@ Here is a test for the new `end_session` boolean parameter:
 ```ruby
 # inside spec/alexa_response_spec.rb
 
-it 'returns a JSON response that "starts over" by clearing the Session Attributes if provided' do
+it 'returns a JSON response that ends the session' do
   expected_response = {
     version: "1.0",
-    sessionAttributes: {},
     response: {
       outputSpeech: {
         type: "PlainText",
@@ -889,7 +888,7 @@ And we've improved the design of ending sessions:
 ```ruby
 # inside an imaginary future server.rb
 
-if parsed_request["request"]["intent"]["name"] == "RestartSession"
+if parsed_request["request"]["intent"]["name"] == "EndSession"
   return Alexa::Response.build("Goodbye", {}, true)
 end
 ```
