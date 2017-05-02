@@ -1150,7 +1150,7 @@ describe '#session_attribute' do
 
     sinatra_request = double("Sinatra::Request", body: StringIO.new(request_json))
 
-    expect(Alexa::Request.new(stubbed_request).session_attribute("movieTitle")).to eq "Titanic"
+    expect(Alexa::Request.new(sinatra_request).session_attribute("movieTitle")).to eq "Titanic"
   end
 end
 ```
@@ -1501,6 +1501,8 @@ class Movie
 end
 ```
 
+> `Forwardable` allows you to delegate behaviour directly to an object's state. Here, any calls to `#title` or `#plot_synopsis` will be passed straight through to whatever the value of `@imdb_record` is.
+
 This allows us to achieve the following inside our methods:
 
 ```ruby
@@ -1615,7 +1617,7 @@ That feels much better – we're borrowing from Sinatra's elegant way of constru
 To get started, we'll need to build some entity that stores all the available intents in a structured way, and can execute those intents within the same context. For brevity, I've omitted tests: here is such an object:
 
 ```ruby
-# inside lib/alexa/handlers
+# inside lib/alexa/handlers.rb
 require './lib/alexa/request'
 require './lib/alexa/response'
 
@@ -1684,8 +1686,8 @@ We will also need some sort of object to register all intent declarations at sta
 We can pull our intent declarations into the scope of our `Alexa::Handlers` object in the following way:
 
 ```ruby
-# inside lib/alexa/skill
-require_relative './alexa/handlers'
+# inside lib/alexa/skill.rb
+require_relative './handlers'
 
 module Alexa
   class Skill
