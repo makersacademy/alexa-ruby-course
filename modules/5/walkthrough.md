@@ -17,9 +17,12 @@ We will use the Session to design a multi-stage ordering process. We will store 
 
 Here are the following steps to take. You might wish to try building _Pizza Buddy_ using these steps alone, before returning to this walkthrough should you need more support. The walkthrough continues after these steps.
 
+### Setting up a new skill and application using Ralyxa
 1. Set up a new skill, called 'Pizza Buddy', with an invocation name of 'pizza buddy'
 2. Set up a new Sinatra application, tunneled with ngrok
 3. Install the latest version of [Ralyxa](https://github.com/sjmog/ralyxa) to the application ([Checkpoint 1](https://github.com/sjmog/pizza_buddy/commit/b151b1e90e3d01aabf889721a45bf5e8db2fd0ea))
+
+### Defining a multi-stage conversation
 4. Define a `StartPizzaOrder` intent in the Alexa Developer Portal, with no slots. The `StartPizzaOrder` intent should have a single Utterance: "StartPizzaOrder new pizza". 
 5. Define a `StartPizzaOrder` intent declaration in the Sinatra application, responding with a prompt to pick a size of pizza.
 6. Define a `LaunchRequest` intent declaration in the Sinatra application. Respond with a simple 'welcome' message ([Checkpoint 2](https://github.com/sjmog/pizza_buddy/commit/caac02c0c11234dc877141c45df3311c2604a53f))
@@ -41,6 +44,8 @@ PenultimatePizzaOrder {toppingOne} {toppingTwo} {toppingThree} {toppingFour} {to
 13. Check that the user has not provided any disallowed toppings, and update the response to `PenultimatePizzaOrder` to reprompt users for more appropriate choices if they get it wrong ([Checkpoint 5](https://github.com/sjmog/pizza_buddy/commit/7bfe879d5e4b3bdf98d4937d90fce19fc27ab9fa))
 14. Define a `ConfirmPizzaOrder` intent in the Alexa Developer Portal, with an Utterance "ConfirmPizzaOrder confirm my order"
 15. Define a `ConfirmPizzaOrder` intent declaration in the Sinatra application, which uses Datamapper and Postgres to save the confirmed pizza to the database ([Checkpoint 6](https://github.com/sjmog/pizza_buddy/commit/584832e8ce4dfe396b39d2831897f7224967e153))
+
+### Interacting with persisted data
 16. Implement a `ListOrders` intent in both the Alexa Developer Portal and the Sinatra application, which gives information about `Pizza` entities saved in the database ([Checkpoint 7](https://github.com/sjmog/pizza_buddy/commit/4c125ed0ed0f39f7e6d927b4e337eccbd9977f38))
 17. Implement a `ListToppings` intent in both the Alexa Developer Portal and the Sinatra application, which lists the available permitted toppings users can add to a pizza ([Checkpoint 8](https://github.com/sjmog/pizza_buddy/commit/54dd44349c5a0fef17fdd0df7708ef644b21bd86))
 18. Add a [Standard Card](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/providing-home-cards-for-the-amazon-alexa-app#creating-a-home-card-to-display-text-and-an-image) in response to a `ConfirmPizzaOrder` intent, using Ralyxa's [Card API](https://github.com/sjmog/ralyxa#using-cards) ([Checkpoint 9](https://github.com/sjmog/pizza_buddy/commit/0ddf8aeaa8adf9578782f0fa824a5ca8b45e8037))
