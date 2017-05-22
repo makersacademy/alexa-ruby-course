@@ -1087,7 +1087,7 @@ intent "ConfirmPizzaOrder" do
   # Here are all the Standard Card 'bits'
   card_title = "Your Pizza Order ##{ pizza.id }"
   card_body = "You ordered a #{ pizza.size } pizza with #{ pizza.toppings.to_sentence }!"
-  card_image = "http://www.cicis.com/media/1243/pizza_adven_zestypepperoni.png"
+  card_image = "https://image.ibb.co/jeRZLv/alexa_pizza.png"
 
   # Here we call the `card` method, which constructs the card JSON
   pizza_card = card(card_title, card_body, card_image)
@@ -1097,7 +1097,7 @@ intent "ConfirmPizzaOrder" do
 end
 ```
 
-> If you're feeling adventurous, why not customise the card picture depending on the ordered pizza?
+> If you're feeling adventurous, why not customise the card picture depending on the ordered pizza? Your picture must be under 2MB, and accessible via an SSL-enabled (HTTPS) endpoint.
 
 ## Wrapping up
 
