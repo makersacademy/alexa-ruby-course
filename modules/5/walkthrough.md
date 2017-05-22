@@ -30,7 +30,7 @@ The Quick Steps map directly onto the Detailed Walkthrough: each Quick Step has 
 3. Install the latest version of [Ralyxa](https://github.com/sjmog/ralyxa) to the application ([Checkpoint 1](https://github.com/sjmog/pizza_buddy/commit/b151b1e90e3d01aabf889721a45bf5e8db2fd0ea))
 
 ### Defining a multi-stage conversation
-4. Define a `StartPizzaOrder` intent in the Alexa Developer Portal, with no slots. The `StartPizzaOrder` intent should have a single Utterance: "StartPizzaOrder new pizza".
+4. Define a `StartPizzaOrder` intent in the Alexa Developer Portal, with one Utterance: "StartPizzaOrder new pizza".
 5. Define a `StartPizzaOrder` intent declaration in the Sinatra application, responding with a prompt to pick a size of pizza.
 6. Define a `LaunchRequest` intent declaration in the Sinatra application. Respond with a simple 'welcome' message ([Checkpoint 2](https://github.com/sjmog/pizza_buddy/commit/caac02c0c11234dc877141c45df3311c2604a53f))
 7. Add a `Pizza` object to the Sinatra application, which presents the available sizes of pizza ([Checkpoint 3](https://github.com/sjmog/pizza_buddy/commit/4e554f02e72c9493c4c77e3100826aafeedb12f4))
@@ -120,7 +120,7 @@ Here's your application directory at the end of this step:
 
 ### Defining a multi-stage conversation
 
-#### 4. Define a `StartPizzaOrder` intent in the Alexa Developer Portal, with no slots. The `StartPizzaOrder` intent should have a single Utterance: "StartPizzaOrder new pizza".
+#### 4. Define a `StartPizzaOrder` intent in the Alexa Developer Portal, with one Utterance: "StartPizzaOrder new pizza".
 
 You can jump directly to this step by forking from [this commit](https://github.com/sjmog/pizza_buddy/commit/b151b1e90e3d01aabf889721a45bf5e8db2fd0ea).
 
