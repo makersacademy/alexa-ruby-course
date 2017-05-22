@@ -52,11 +52,11 @@ The Quick Steps map directly onto the Detailed Walkthrough: each Quick Step has 
 
 ### Setting up a new skill and application using Ralyxa
 
-##### 1. Set up a new skill, called 'Pizza Buddy', with an invocation name of 'pizza buddy'
+#### 1. Set up a new skill, called 'Pizza Buddy', with an invocation name of 'pizza buddy'
 
 Our first step, as always, is to set up the skill on Amazon. We'll want to call this skill 'Pizza Buddy', with an invocation name of 'pizza buddy'. We won't need account linking.
 
-##### 2. Set up a new Sinatra application, tunneled with ngrok
+#### 2. Set up a new Sinatra application, tunneled with ngrok
 
 Create a new directory (we'll refer to this as the 'application directory'). Inside this directory, create a Gemfile, containing a single gem: `sinatra`. Also, install [ngrok](https://ngrok.com/). I'll assume you've downloaded ngrok to this directory.
 
@@ -85,7 +85,7 @@ Here's your application directory at the end of this step:
 └── server.rb
 ```
 
-##### 3. Install the latest version of [Ralyxa](https://github.com/sjmog/ralyxa) to the application
+#### 3. Install the latest version of [Ralyxa](https://github.com/sjmog/ralyxa) to the application
 
 > Ralyxa is a Ruby framework for interacting with Alexa. It simplifies a lot of the interactions on the Ruby side. This walkthrough assumes you are using, at a minimum, version 1.2.0 of Ralyxa. If you don't know your Ralyxa version, you're probably fine.
 
@@ -120,7 +120,7 @@ Here's your application directory at the end of this step:
 
 ### Defining a multi-stage conversation
 
-##### 4. Define a `StartPizzaOrder` intent in the Alexa Developer Portal, with no slots. The `StartPizzaOrder` intent should have a single Utterance: "StartPizzaOrder new pizza".
+#### 4. Define a `StartPizzaOrder` intent in the Alexa Developer Portal, with no slots. The `StartPizzaOrder` intent should have a single Utterance: "StartPizzaOrder new pizza".
 
 You can jump directly to this step by forking from [this commit](https://github.com/sjmog/pizza_buddy/commit/b151b1e90e3d01aabf889721a45bf5e8db2fd0ea).
 
@@ -156,7 +156,7 @@ Next, define the Utterance for this intent:
 StartPizzaOrder order a pizza
 ```
 
-##### 5. Define a `StartPizzaOrder` intent declaration in the Sinatra application, responding with a prompt to pick a size of pizza.
+#### 5. Define a `StartPizzaOrder` intent declaration in the Sinatra application, responding with a prompt to pick a size of pizza.
 
 Second, define the **Intent Declaration** in the Sinatra application. Add a new file, `start_pizza_order.rb`, to the intents subdirectory inside your application directory. Inside this, write the intent declaration as follows:
 
@@ -196,7 +196,7 @@ Here's your application directory at the end of this step:
 └── server.rb
 ```
 
-##### 6. Define a `LaunchRequest` intent declaration in the Sinatra application. Respond with a simple 'welcome' message.
+#### 6. Define a `LaunchRequest` intent declaration in the Sinatra application. Respond with a simple 'welcome' message.
 
 Sometimes, a user will want to launch a skill without specifying any particular action to take. This is called a `LaunchRequest`. For example:
 
@@ -260,7 +260,7 @@ Here's your application directory at the end of this step:
 └── server.rb
 ```
 
-##### 7. Add a `Pizza` object to the Sinatra application, which presents the available sizes of pizza
+#### 7. Add a `Pizza` object to the Sinatra application, which presents the available sizes of pizza
 
 You can jump directly to this step by forking from [this commit](https://github.com/sjmog/pizza_buddy/commit/caac02c0c11234dc877141c45df3311c2604a53f).
 
@@ -343,7 +343,7 @@ Here's your application directory at the end of this step:
 └── server.rb
 ```
 
-##### 8. Define a `ContinuePizzaOrder` intent in the Alexa Developer Portal, with one custom slot: the available sizes of pizza
+#### 8. Define a `ContinuePizzaOrder` intent in the Alexa Developer Portal, with one custom slot: the available sizes of pizza
 
 You can jump directly to this step by forking from [this commit](https://github.com/sjmog/pizza_buddy/commit/4e554f02e72c9493c4c77e3100826aafeedb12f4).
 
@@ -387,7 +387,7 @@ ContinuePizzaOrder a {size} pizza
 
 > I've added two alternative Utterances. This is because it's quite likely our user will interact with the application in different ways. It's reasonable to expect the user to reply to "what size of pizza?" with "small/medium/large", or "a small/medium/large pizza". There are other possibilities too: you can add as many variants as you wish.
 
-##### 9. Define a `ContinuePizzaOrder` intent declaration which saves the user's choice of pizza size to the session, and prompts for pizza toppings
+#### 9. Define a `ContinuePizzaOrder` intent declaration which saves the user's choice of pizza size to the session, and prompts for pizza toppings
 
 Secondly, we need an Intent Declaration in Sinatra to handle the request Alexa will serve our application when the `ContinuePizzaOrder` Intent is invoked.
 
@@ -411,7 +411,7 @@ end
 
 Finally, we need to test that Alexa and Sinatra play together nicely. In the Service Simulator, on-device, or through Echosim, try asking Pizza Buddy for "a large pizza". You should be prompted to give your choice of toppings.
 
-##### 10. Define a `PenultimatePizzaOrder` intent in the Alexa Developer Portal, with slots for up to five toppings
+#### 10. Define a `PenultimatePizzaOrder` intent in the Alexa Developer Portal, with slots for up to five toppings
 
 You can jump directly to this step by forking from [this commit](https://github.com/sjmog/pizza_buddy/commit/29c4ddd8ae11a6b23a065ed3d0a571bfc924d347).
 
@@ -482,7 +482,7 @@ First, define a `PenultimatePizzaOrder` Intent in the Alexa Developer Portal. Th
 
 > These values only _guide_ Alexa's understanding. Users can still order toppings outside of this given range. We'll handle that case in section 13.
 
-##### 11. Define the Utterances for the `PenultimatePizzaOrder`, handling between one and five toppings
+#### 11. Define the Utterances for the `PenultimatePizzaOrder`, handling between one and five toppings
 
 Now, define Utterances to invoke this Intent. Since we want this intent to be invoked with _between one and five_ toppings, we define **cascading Utterances**. Here are the complete Utterances after this step:
 
@@ -501,7 +501,7 @@ PenultimatePizzaOrder {toppingOne} {toppingTwo} {toppingThree} {toppingFour} {to
 
 The `PenultimatePizzaOrder` Intent can now be invoked with between one and five toppings. If a user provides, say, four toppings, the final slot (`toppingFive`) will be empty.
 
-##### 12. Define a `PenultimatePizzaOrder` intent declaration confirming the size and toppings
+#### 12. Define a `PenultimatePizzaOrder` intent declaration confirming the size and toppings
 
 You can jump directly to this step by forking from [this commit](https://github.com/sjmog/pizza_buddy/commit/0fc940187405ed9eb29e8a05929e4a7308cdc831).
 
@@ -527,7 +527,7 @@ end
 
 > The `inject` function in the middle of this intent declaration iterates through available toppings and compiles an array of requested toppings (accounting for null values if the user ordered fewer than five toppings).
 
-##### 13. Reprompt users if they choose disallowed toppings
+#### 13. Reprompt users if they choose disallowed toppings
 
 We need a mechanism to stop the user from ordering non-existent toppings. An ideal interaction (from the start) would go like this:
 
@@ -626,7 +626,7 @@ intent "PenultimatePizzaOrder" do
 end
 ```
 
-##### 14. Define a `ConfirmPizzaOrder` intent in the Alexa Developer Portal
+#### 14. Define a `ConfirmPizzaOrder` intent in the Alexa Developer Portal
 
 You can jump directly to this step by forking from [this commit](https://github.com/sjmog/pizza_buddy/commit/7bfe879d5e4b3bdf98d4937d90fce19fc27ab9fa).
 
@@ -707,7 +707,7 @@ PenultimatePizzaOrder {toppingOne} {toppingTwo} {toppingThree} {toppingFour} {to
 ConfirmPizzaOrder confirm my order
 ```
 
-##### 15. Define a `ConfirmPizzaOrder` intent declaration, which saves the confirmed pizza to the database
+#### 15. Define a `ConfirmPizzaOrder` intent declaration, which saves the confirmed pizza to the database
 
 We want to persist the user's order to a database, for later retrieval. To do this, we need to set up a [Postgres](https://www.postgresql.org/) database and an [ORM](https://stackoverflow.com/questions/1279613/what-is-an-orm-and-where-can-i-learn-more-about-it) to communicate between Sinatra and Postgres. I'm using [Datamapper](http://datamapper.org/), which is a well-supported Ruby ORM. You can use any selection of technology you prefer!
 
@@ -852,7 +852,7 @@ end
 
 ### Interacting with persisted data
 
-##### 16. Implement a `ListOrders` intent, listing `Pizza` entities saved in the database
+#### 16. Implement a `ListOrders` intent, listing `Pizza` entities saved in the database
 
 You can jump directly to this step by forking from [this commit](https://github.com/sjmog/pizza_buddy/commit/584832e8ce4dfe396b39d2831897f7224967e153).
 
@@ -952,7 +952,7 @@ end
 
 > Remember to test the implementation of this intent using the Service Simulator, Echosim, or your Alexa device.
 
-##### 17. Implement a `ListToppings` intent, which lists the available permitted toppings
+#### 17. Implement a `ListToppings` intent, which lists the available permitted toppings
 
 You can jump directly to this step by forking from [this commit](https://github.com/sjmog/pizza_buddy/commit/4c125ed0ed0f39f7e6d927b4e337eccbd9977f38).
 
@@ -1056,7 +1056,7 @@ end
 
 > Again, remember to test that your integration works!
 
-##### 18. Add a [Standard Card](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/providing-home-cards-for-the-amazon-alexa-app#creating-a-home-card-to-display-text-and-an-image) on order confirmation, using Ralyxa's [Card API](https://github.com/sjmog/ralyxa#using-cards)
+#### 18. Add a [Standard Card](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/providing-home-cards-for-the-amazon-alexa-app#creating-a-home-card-to-display-text-and-an-image) on order confirmation, using Ralyxa's [Card API](https://github.com/sjmog/ralyxa#using-cards)
 
 You can jump directly to this step by forking from [this commit](https://github.com/sjmog/pizza_buddy/commit/54dd44349c5a0fef17fdd0df7708ef644b21bd86).
 
@@ -1097,6 +1097,6 @@ end
 
 > If you're feeling adventurous, why not customise the card picture depending on the ordered pizza?
 
-### Wrapping up
+## Wrapping up
 
 This concludes module 5: building an intermediate skill with Ruby and Alexa. You can fork the completed application at the end of this module from [this commit](https://github.com/sjmog/pizza_buddy/commit/0ddf8aeaa8adf9578782f0fa824a5ca8b45e8037).
