@@ -103,6 +103,8 @@ end
 
 > This will allow Ralyxa to hook in to, and respond to, any requests that come to your application.
 
+![](./images/overview.jpg)
+
 Add a subdirectory within your application directory, called `intents`. This is where you will define your **Intent Declarations**, which are where you tell Ralyxa how to handle Alexa requests.
 
 Here's your application directory at the end of this step:
