@@ -37,7 +37,7 @@ The Quick Steps map directly onto the Detailed Walkthrough: each Quick Step has 
 8. Define a `ContinuePizzaOrder` intent in the Alexa Developer Portal, with one slot, named `size`, of type `PIZZA_SIZE`, a custom slot. Define a custom slot, `PIZZA_SIZE`, with values depending on the sizes you offer in your response to the `StartPizzaOrder` intent.
 9. Define a `ContinuePizzaOrder` intent declaration which saves the user's choice of pizza size to the session, and prompts for pizza toppings
 10. Define a `PenultimatePizzaOrder` intent in the Alexa Developer Portal, with slots for up to five toppings
-11. 11. Define the Utterances for the `PenultimatePizzaOrder`, handling between one and five toppings
+11. Define the Utterances for the `PenultimatePizzaOrder`, handling between one and five toppings
 12. Define a `PenultimatePizzaOrder` intent declaration confirming the size and toppings ([Checkpoint 4](https://github.com/sjmog/pizza_buddy/commit/0fc940187405ed9eb29e8a05929e4a7308cdc831))
 13. Reprompt users if they choose disallowed toppings ([Checkpoint 5](https://github.com/sjmog/pizza_buddy/commit/7bfe879d5e4b3bdf98d4937d90fce19fc27ab9fa))
 14. Define a `ConfirmPizzaOrder` intent in the Alexa Developer Portal
