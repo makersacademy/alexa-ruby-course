@@ -58,9 +58,9 @@ To create a new LWA profile for your Alexa skill, log in to the [Amazon Develope
 
 Create a new security profile. Give it an appropriate name (perhaps `alexa-pizza-buddy`) and description (Pizza Buddy). For now, we'll use Amazon's Data Privacy policy: https://www.amazon.com/gp/help/customer/display.html?nodeId=468496. You should use your own for your own skills.
 
-![](https://m.media-amazon.com/images/G/01/DeveloperBlogs/AmazonDeveloperBlogs/legacy/LWA_ZC3._CB520201683_.jpg)
+![](http://assets.makersacademy.com/images/alexa-ruby-course/6/security_profile.png)
 
-> Why not use a pizza image as the icon?
+> Why not use a [pizza image](http://assets.makersacademy.com/images/alexa-ruby-course/6/pizza.jpg) as the icon?
 
 Make a note of your **Client ID** and **Client Secret**:
 
@@ -132,6 +132,14 @@ end
 ```
 
 > You may need to update to the latest version of Ralyxa for the above syntax (a [guard clause](https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html)) to work correctly.
+
+Using an Alexa device, test this card. On launch, the user should receive a card in their Alexa app. Clicking on that will take them to Login with Amazon. After providing their details, the user explicitly authorises Pizza Buddy to access their name and email address:
+
+![](http://assets.makersacademy.com/images/alexa-ruby-course/6/consent.png)
+
+Once they agree, they are redirected to a page that reports success:
+
+![](http://assets.makersacademy.com/images/alexa-ruby-course/6/success.png)
 
 #### 3. If the user has an access token during a `LaunchRequest`, authenticate and log in, or sign up, the user
 
