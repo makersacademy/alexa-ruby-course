@@ -56,9 +56,11 @@ To create a new LWA profile for your Alexa skill, log in to the [Amazon Develope
 
 ![](https://m.media-amazon.com/images/G/01/DeveloperBlogs/AmazonDeveloperBlogs/legacy/LWA_ZC2._CB520201684_.jpg)
 
-Create a new security profile. _Use your own Data Privacy Policy link_. For now, we'll use Amazon's:
+Create a new security profile. Give it an appropriate name (perhaps `alexa-pizza-buddy`) and description (Pizza Buddy). For now, we'll use Amazon's Data Privacy policy: https://www.amazon.com/gp/help/customer/display.html?nodeId=468496. You should use your own for your own skills.
 
 ![](https://m.media-amazon.com/images/G/01/DeveloperBlogs/AmazonDeveloperBlogs/legacy/LWA_ZC3._CB520201683_.jpg)
+
+> Why not use a pizza image as the icon?
 
 Make a note of your **Client ID** and **Client Secret**:
 
@@ -194,22 +196,22 @@ class User
 
   property :id,           Serial
   property :name,         String
-  property :access_token, String
+  property :access_token, Text
 end
 ```
+
+> We're using the `Text` type for the `access_token` property as Access Tokens can be longer than the `String` type would allow.
 
 We will also need to update `database.rb` to account for the new tables:
 
 ```ruby
 # in database.rb
 
+require 'data_mapper'
 require './lib/pizza'
 require './lib/user'
 
-configure :development do
-  DataMapper.setup(:default, 'postgres://pizzabuddy@localhost/pizzabuddy')
-end
-
+DataMapper.setup(:default, 'postgres://pizzabuddy@localhost/pizzabuddy')
 DataMapper.finalize
 Pizza.auto_migrate!
 User.auto_migrate!
@@ -232,14 +234,10 @@ RSpec.describe User do
   describe '.authenticate' do
     let(:amazon_response) do
       amazon_response = {
-        body: {
-          profile: {
-            name: "Timmy Tales"
-          }
-        }
+        name: "Timmy Tales"
       }.to_json
     end
-    let(:client) { double(:"Net::HTTP", get_response: amazon_response) }
+    let(:client) { double(:"Net::HTTP", get: amazon_response) }
 
     it 'creates a user if one does not exist' do
       expect { User.authenticate("AccessToken", client) }.to change { User.count }.by(1)
@@ -276,7 +274,7 @@ class User
 
   def self.authenticate(access_token, client = Net::HTTP)
     uri = URI.parse("#{ AMAZON_API_URL }?access_token=#{ access_token }")
-    first_name = JSON.parse(client.get_response(uri))["body"]["profile"]["name"].split(" ").first
+    first_name = JSON.parse(client.get(uri))["profile"]["name"].split(" ").first
     first_or_create(name: first_name, access_token: access_token)
   end
 end
@@ -297,6 +295,8 @@ end
 ```
 
 Once the user has completed the Account Linking Card, our application will authenticate, then retrieve or save a user.
+
+> Double-check that everything has been correctly set up. Test this step using your Alexa device, by saying "Alexa, launch Pizza Buddy" and checking your Alexa app.
 
 ### Managing Pizza ordering per-user
 
@@ -369,6 +369,32 @@ class Pizza
   belongs_to :user
 
   # ...rest of class...
+end
+```
+
+We will need to update the `spec/pizza_spec.rb` tests for Pizza to reflect this new requirement:
+
+```ruby
+# in spec/pizza_spec.rb, with omissions for brevity
+require 'pizza'
+
+RSpec.describe Pizza do
+  # ... rest of tests ...
+
+  describe 'Saving to a database' do
+    it 'starts out unpersisted' do
+      pizza = Pizza.new(size: 'small', toppings: ['cheese', 'ham'])
+      expect(pizza.id).to be_nil
+    end
+
+    it 'can be persisted' do
+      # Add a user_id parameter here, to mock the required user this pizza must belong_to
+      pizza = Pizza.new(size: 'small', toppings: ['cheese', 'ham'], user_id: 1)
+      pizza.save
+
+      expect(pizza.id).not_to be_nil
+    end
+  end
 end
 ```
 
