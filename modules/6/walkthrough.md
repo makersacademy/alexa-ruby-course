@@ -71,7 +71,9 @@ Make a note of your **Client ID** and **Client Secret**:
 
 ![](https://m.media-amazon.com/images/G/01/DeveloperBlogs/AmazonDeveloperBlogs/legacy/LWA_ZC4._CB520201646_.jpg)
 
-Copy a Redirect URL from the 'Account Linking' section of your skill Configuration. It may start 'https://layla.amazon.com/api/skill'. or 'https://pitangui.amazon.com/api/skill'. Paste this Redirect URL into the Security Profile 'Allow Return URLs' option (it's under 'Web Settings').
+Copy a Redirect URL from the 'Account Linking' section of your skill Configuration. It may start 'https://layla.amazon.com/api/skill'. or 'https://pitangui.amazon.com/api/skill'. Paste this Redirect URL into the Security Profile 'Allow Return URLs' option (it's under 'Web Settings'):
+
+![](http://assets.makersacademy.com/images/alexa-ruby-course/6/web_settings.png)
 
 Return to the Account Linking section of our _Pizza Buddy_ skill, and use the table below to fill out the required sections of the form.
 
