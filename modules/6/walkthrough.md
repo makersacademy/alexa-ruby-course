@@ -56,15 +56,22 @@ To create a new LWA profile for your Alexa skill, log in to the [Amazon Develope
 
 ![](https://m.media-amazon.com/images/G/01/DeveloperBlogs/AmazonDeveloperBlogs/legacy/LWA_ZC2._CB520201684_.jpg)
 
-Create a new security profile. Give it an appropriate name (perhaps `alexa-pizza-buddy`) and description (Pizza Buddy). For now, we'll use Amazon's Data Privacy policy: https://www.amazon.com/gp/help/customer/display.html?nodeId=468496. You should use your own for your own skills.
+Create a new security profile. Use the table below to fill out the required sections of the form.
+
+| Key | Value |
+|---|---|
+| Name | alexa-pizza-buddy |
+| Description | Pizza Buddy |
+| Privacy Notice URL | https://www.amazon.com/gp/help/customer/display.html?nodeId=468496 (use your own when launching non-test skills) |
+| Icon URL | http://assets.makersacademy.com/images/alexa-ruby-course/6/pizza.jpg (or another pizza!) |
 
 ![](http://assets.makersacademy.com/images/alexa-ruby-course/6/security_profile.png)
-
-> Why not use a [pizza image](http://assets.makersacademy.com/images/alexa-ruby-course/6/pizza.jpg) as the icon?
 
 Make a note of your **Client ID** and **Client Secret**:
 
 ![](https://m.media-amazon.com/images/G/01/DeveloperBlogs/AmazonDeveloperBlogs/legacy/LWA_ZC4._CB520201646_.jpg)
+
+Copy a Redirect URL from the 'Account Linking' section of your skill Configuration. It may start 'https://layla.amazon.com/api/skill'. or 'https://pitangui.amazon.com/api/skill'. Paste this Redirect URL into the Security Profile 'Allow Return URLs' option (it's under 'Web Settings').
 
 Return to the Account Linking section of our _Pizza Buddy_ skill, and use the table below to fill out the required sections of the form.
 
@@ -74,7 +81,6 @@ Return to the Account Linking section of our _Pizza Buddy_ skill, and use the ta
 | Authorization URL  |  https://www.amazon.com/ap/oa |
 | Client ID  | The Client ID from the LWA Security Profile.  This has a format such as amzn1-application-oa2-client-xxx  |
 | Scope  | LWA supports [several scopes](https://developer.amazon.com/public/apis/engage/login-with-amazon/docs/customer_profile.html). For this example, let’s use “profile”.  This will allow Pizza Buddy to retrieve a full name for the user, and greet them personally |
-| Redirect URL | The Redirect URL from the 'Web Services' section of the LWA Security Profile. It may start https://layla.amazon.com |
 | Authorization Grant Type  | Select 'Auth Code Grant'  |
 | Access Token URI  | https://api.amazon.com/auth/o2/token  |
 | Client Secret  | The Client Secret from the LWA Security Profile  |
