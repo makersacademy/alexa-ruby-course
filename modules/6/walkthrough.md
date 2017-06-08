@@ -484,6 +484,6 @@ end
 
 ## Wrapping up
 
-This concludes module 6: authenticating skill users with OAuth. You can fork the completed application at the end of this module from [this commit](https://github.com/sjmog/pizza_buddy/commit/9fcf4887e56a079418e7675c0d13bafbc5432853).
+This concludes module 6: authenticating skill users with OAuth. You can fork the completed application at the end of this module from [this commit](https://github.com/sjmog/pizza_buddy/commit/39c3c16299cffa43bea46a6238d0034687e9b3ba).
 
 We have now covered all aspects required to build an advanced skill using Alexa and Ruby. Now, go build your own!
